@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2 } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -69,6 +69,7 @@ export default function StudyApp() {
   const [sessionDone, setSessionDone] = useState(false);
 
   const [showInput, setShowInput] = useState(false);
+  const [showList, setShowList] = useState(false);
   const [koreanForm, setKoreanForm] = useState(EMPTY_KOREAN_FORM);
   const [wineForm, setWineForm] = useState(EMPTY_WINE_FORM);
   const [formError, setFormError] = useState("");
@@ -112,6 +113,18 @@ export default function StudyApp() {
     setShowInput(false);
   };
 
+  const handleDeleteCard = (id) => {
+    if (!window.confirm("このカードを削除する？元に戻せないよ。")) return;
+    setDeck((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setQueueIdx(0);
+    setFlipped(false);
+    setSessionDone(false);
+  };
+
   const domainCards = useMemo(
     () =>
       Object.values(deck)
@@ -152,6 +165,7 @@ export default function StudyApp() {
     setFlipped(false);
     setSessionDone(false);
     setShowInput(false);
+    setShowList(false);
     setFormError("");
   };
 
@@ -245,31 +259,127 @@ export default function StudyApp() {
 
         {/* Add today's learning */}
         <div style={{ marginBottom: 20 }}>
-          {!showInput ? (
-            <button
-              onClick={() => {
-                setShowInput(true);
-                setFormError("");
-              }}
+          {!showInput && !showList ? (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => {
+                  setShowInput(true);
+                  setFormError("");
+                }}
+                style={{
+                  flex: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: "12px 0",
+                  borderRadius: 10,
+                  border: `1.5px dashed ${d.accent}`,
+                  background: "transparent",
+                  color: d.accent,
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus size={16} />
+                {domain === "korean" ? "今日学んだ単語・表現を追加" : "今日学んだワイン知識を追加"}
+              </button>
+              <button
+                onClick={() => setShowList(true)}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "12px 0",
+                  borderRadius: 10,
+                  border: "1.5px solid #E4DFD3",
+                  background: "transparent",
+                  color: "#6B6355",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: "pointer",
+                }}
+              >
+                <List size={16} />
+                一覧
+              </button>
+            </div>
+          ) : showList ? (
+            <div
               style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                padding: "12px 0",
-                borderRadius: 10,
-                border: `1.5px dashed ${d.accent}`,
-                background: "transparent",
-                color: d.accent,
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: "pointer",
+                background: "#FFFFFF",
+                borderRadius: 12,
+                padding: 16,
+                border: `1px solid ${d.accentSoft}`,
               }}
             >
-              <Plus size={16} />
-              {domain === "korean" ? "今日学んだ単語・表現を追加" : "今日学んだワイン知識を追加"}
-            </button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6355" }}>
+                  {d.label}のカード一覧（{domainCards.length}枚）
+                </div>
+                <button
+                  onClick={() => setShowList(false)}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    color: "#6B6355",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    padding: 4,
+                  }}
+                >
+                  閉じる
+                </button>
+              </div>
+              {domainCards.length === 0 ? (
+                <div style={{ fontSize: 13, color: "#9A9184", padding: "12px 0" }}>まだカードがないよ。</div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
+                  {domainCards.map((c) => (
+                    <div
+                      key={c.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        gap: 8,
+                        padding: "10px 12px",
+                        borderRadius: 8,
+                        background: "#F7F4EE",
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{domain === "korean" ? c.ko : c.q}</div>
+                        <div style={{ fontSize: 12, color: "#9A9184", marginTop: 2 }}>
+                          {domain === "korean" ? c.meaning : c.a}
+                        </div>
+                        <div style={{ fontSize: 11, color: d.accent, marginTop: 4 }}>
+                          Box {c.box}・{c.correct}/{c.seen} 正解
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteCard(c.id)}
+                        aria-label="削除"
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          color: "#B0483A",
+                          cursor: "pointer",
+                          padding: 4,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             <div
               style={{
@@ -383,27 +493,50 @@ export default function StudyApp() {
         </div>
 
         {/* Progress */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 14,
-            fontSize: 13,
-            color: "#6B6355",
-          }}
-        >
-          <span>
-            {Math.min(queueIdx + 1, totalCards)} / {totalCards} 枚
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Flame size={14} color={d.accent} />
-            定着 {totalMastered}/{totalCards}
-          </span>
-        </div>
+        {totalCards > 0 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 14,
+              fontSize: 13,
+              color: "#6B6355",
+            }}
+          >
+            <span>
+              {Math.min(queueIdx + 1, totalCards)} / {totalCards} 枚
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <Flame size={14} color={d.accent} />
+              定着 {totalMastered}/{totalCards}
+            </span>
+          </div>
+        )}
 
         {/* Card */}
-        {!sessionDone ? (
+        {totalCards === 0 ? (
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 16,
+              minHeight: 260,
+              padding: 28,
+              boxShadow: "0 8px 24px rgba(43,38,32,0.08)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              gap: 10,
+            }}
+          >
+            <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 18, fontWeight: 600 }}>
+              カードがまだないよ
+            </div>
+            <div style={{ fontSize: 13, color: "#6B6355" }}>「＋追加」から{d.label}のカードを登録してみて。</div>
+          </div>
+        ) : !sessionDone ? (
           <div
             onClick={() => setFlipped((f) => !f)}
             style={{
