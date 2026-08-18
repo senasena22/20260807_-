@@ -27,11 +27,34 @@ const DOMAINS = {
 const DECK_STORAGE_KEY = "study-srs.deck.v1";
 const DOMAIN_STORAGE_KEY = "study-srs.domain.v1";
 
-// simple leitner-style boxes: 0 = new/due now, higher = longer interval (not time-based here, just streak strength)
+// days until next review after each successful box level (box 1〜5)
+const INTERVALS_DAYS = [1, 3, 7, 16, 30];
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function addDaysStr(dateStr, days) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + days);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
+
+function dueLabel(dueAt) {
+  const today = todayStr();
+  if (!dueAt || dueAt <= today) return "今日";
+  const [, m, d] = dueAt.split("-").map(Number);
+  return `${m}/${d}`;
+}
+
+// box: 0 = new/due now, 1〜5 = how many successful reviews in a row. dueAt: "YYYY-MM-DD", the next date this card should resurface.
 function initDeck() {
   const cards = {};
+  const today = todayStr();
   [...KOREAN_CARDS.map((c) => ({ ...c, domain: "korean" })), ...WINE_CARDS.map((c) => ({ ...c, domain: "wine" }))].forEach(
-    (c) => (cards[c.id] = { ...c, box: 0, seen: 0, correct: 0 })
+    (c) => (cards[c.id] = { ...c, box: 0, interval: 0, dueAt: today, seen: 0, correct: 0 })
   );
   return cards;
 }
@@ -42,6 +65,14 @@ function loadDeck() {
     if (!raw) return initDeck();
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return initDeck();
+    const today = todayStr();
+    // migrate cards saved before due-date scheduling existed
+    Object.values(parsed).forEach((c) => {
+      if (!c.dueAt) {
+        c.interval = 0;
+        c.dueAt = today;
+      }
+    });
     return parsed;
   } catch {
     return initDeck();
@@ -58,6 +89,14 @@ function newCardId() {
   return `gen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function buildSessionQueue(deck, domain) {
+  const today = todayStr();
+  return Object.values(deck)
+    .filter((c) => c.domain === domain && (c.dueAt || today) <= today)
+    .sort((a, b) => (a.dueAt || "").localeCompare(b.dueAt || "") || a.box - b.box)
+    .map((c) => c.id);
+}
+
 const EMPTY_KOREAN_FORM = { ko: "", romanized: "", meaning: "", rule: "" };
 const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "" };
 
@@ -67,6 +106,7 @@ export default function StudyApp() {
   const [flipped, setFlipped] = useState(false);
   const [queueIdx, setQueueIdx] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
+  const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain()));
 
   const [showInput, setShowInput] = useState(false);
   const [showList, setShowList] = useState(false);
@@ -83,10 +123,10 @@ export default function StudyApp() {
   }, [domain]);
 
   const addCard = (card) => {
-    setDeck((prev) => {
-      const id = newCardId();
-      return { ...prev, [id]: { ...card, id, domain, box: 0, seen: 0, correct: 0 } };
-    });
+    const id = newCardId();
+    const today = todayStr();
+    setDeck((prev) => ({ ...prev, [id]: { ...card, id, domain, box: 0, interval: 0, dueAt: today, seen: 0, correct: 0 } }));
+    setSessionQueue((q) => [...q, id]);
     setQueueIdx(0);
     setSessionDone(false);
   };
@@ -120,6 +160,7 @@ export default function StudyApp() {
       delete next[id];
       return next;
     });
+    setSessionQueue((q) => q.filter((qid) => qid !== id));
     setQueueIdx(0);
     setFlipped(false);
     setSessionDone(false);
@@ -129,11 +170,11 @@ export default function StudyApp() {
     () =>
       Object.values(deck)
         .filter((c) => c.domain === domain)
-        .sort((a, b) => a.box - b.box || a.seen - b.seen),
+        .sort((a, b) => (a.dueAt || "").localeCompare(b.dueAt || "") || a.box - b.box),
     [deck, domain]
   );
 
-  const current = domainCards[queueIdx % domainCards.length];
+  const current = deck[sessionQueue[queueIdx]];
   const d = DOMAINS[domain];
 
   const speak = (text) => {
@@ -146,13 +187,23 @@ export default function StudyApp() {
   };
 
   const handleAnswer = (correct) => {
+    const cardId = current.id;
     setDeck((prev) => {
-      const c = prev[current.id];
-      const nextBox = correct ? Math.min(c.box + 1, 5) : 0;
-      return { ...prev, [current.id]: { ...c, box: nextBox, seen: c.seen + 1, correct: c.correct + (correct ? 1 : 0) } };
+      const c = prev[cardId];
+      let box, interval, dueAt;
+      if (correct) {
+        box = Math.min(c.box + 1, INTERVALS_DAYS.length);
+        interval = INTERVALS_DAYS[box - 1];
+        dueAt = addDaysStr(todayStr(), interval);
+      } else {
+        box = 0;
+        interval = 0;
+        dueAt = todayStr();
+      }
+      return { ...prev, [cardId]: { ...c, box, interval, dueAt, seen: c.seen + 1, correct: c.correct + (correct ? 1 : 0) } };
     });
     setFlipped(false);
-    if (queueIdx + 1 >= domainCards.length) {
+    if (queueIdx + 1 >= sessionQueue.length) {
       setSessionDone(true);
     } else {
       setQueueIdx((i) => i + 1);
@@ -161,6 +212,7 @@ export default function StudyApp() {
 
   const switchDomain = (key) => {
     setDomain(key);
+    setSessionQueue(buildSessionQueue(deck, key));
     setQueueIdx(0);
     setFlipped(false);
     setSessionDone(false);
@@ -170,6 +222,14 @@ export default function StudyApp() {
   };
 
   const restart = () => {
+    setSessionQueue(buildSessionQueue(deck, domain));
+    setQueueIdx(0);
+    setFlipped(false);
+    setSessionDone(false);
+  };
+
+  const forceReviewAll = () => {
+    setSessionQueue(domainCards.map((c) => c.id));
     setQueueIdx(0);
     setFlipped(false);
     setSessionDone(false);
@@ -177,6 +237,11 @@ export default function StudyApp() {
 
   const totalMastered = Object.values(deck).filter((c) => c.domain === domain && c.box >= 3).length;
   const totalCards = domainCards.length;
+  const sessionTotal = sessionQueue.length;
+  const nextDueDate = domainCards
+    .map((c) => c.dueAt)
+    .filter(Boolean)
+    .sort()[0];
 
   return (
     <div
@@ -358,7 +423,7 @@ export default function StudyApp() {
                           {domain === "korean" ? c.meaning : c.a}
                         </div>
                         <div style={{ fontSize: 11, color: d.accent, marginTop: 4 }}>
-                          Box {c.box}・{c.correct}/{c.seen} 正解
+                          Box {c.box}・{c.correct}/{c.seen} 正解・次回 {dueLabel(c.dueAt)}
                         </div>
                       </div>
                       <button
@@ -493,7 +558,7 @@ export default function StudyApp() {
         </div>
 
         {/* Progress */}
-        {totalCards > 0 && (
+        {totalCards > 0 && sessionTotal > 0 && (
           <div
             style={{
               display: "flex",
@@ -505,7 +570,7 @@ export default function StudyApp() {
             }}
           >
             <span>
-              {Math.min(queueIdx + 1, totalCards)} / {totalCards} 枚
+              今日 {Math.min(queueIdx + 1, sessionTotal)} / {sessionTotal} 枚
             </span>
             <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <Flame size={14} color={d.accent} />
@@ -535,6 +600,47 @@ export default function StudyApp() {
               カードがまだないよ
             </div>
             <div style={{ fontSize: 13, color: "#6B6355" }}>「＋追加」から{d.label}のカードを登録してみて。</div>
+          </div>
+        ) : sessionTotal === 0 ? (
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 16,
+              minHeight: 260,
+              padding: 28,
+              boxShadow: "0 8px 24px rgba(43,38,32,0.08)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              gap: 14,
+            }}
+          >
+            <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, fontWeight: 600 }}>
+              今日の復習は終わったよ
+            </div>
+            <div style={{ fontSize: 13, color: "#6B6355" }}>
+              {nextDueDate ? `次回は ${dueLabel(nextDueDate)} に出てくるよ` : "また明日確認してね"}
+            </div>
+            <button
+              onClick={forceReviewAll}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: "transparent",
+                color: d.accent,
+                border: `1.5px solid ${d.accent}`,
+                borderRadius: 999,
+                padding: "10px 20px",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <RotateCcw size={15} /> 今すぐ全部復習する
+            </button>
           </div>
         ) : !sessionDone ? (
           <div
@@ -732,7 +838,9 @@ export default function StudyApp() {
 
         {/* Box legend */}
         <div style={{ marginTop: 22, fontSize: 11, color: "#9A9184", textAlign: "center", lineHeight: 1.6 }}>
-          「まだ不安」を選ぶとBoxがリセットされ、また早めに出題されます。
+          「わかった」を選ぶと次の復習日が1→3→7→16→30日後と延びていきます。
+          <br />
+          「まだ不安」を選ぶと今日中にもう一度出てきます。
           <br />
           追加したカードと学習状況はこの端末に自動で保存されます。
         </div>
