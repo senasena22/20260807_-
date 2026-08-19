@@ -27,6 +27,7 @@ const DOMAINS = {
 const DECK_STORAGE_KEY = "study-srs.deck.v1";
 const DOMAIN_STORAGE_KEY = "study-srs.domain.v1";
 const STATS_STORAGE_KEY = "study-srs.stats.v1";
+const EXAM_DATES_STORAGE_KEY = "study-srs.examDates.v1";
 
 // days until next review after each successful box level (box 1〜5)
 const INTERVALS_DAYS = [1, 3, 7, 16, 30];
@@ -45,6 +46,26 @@ function addDaysStr(dateStr, days) {
   const dt = new Date(y, m - 1, d);
   dt.setDate(dt.getDate() + days);
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
+
+function daysUntil(dateStr) {
+  const today = todayStr();
+  const [y1, m1, d1] = today.split("-").map(Number);
+  const [y2, m2, d2] = dateStr.split("-").map(Number);
+  const t1 = Date.UTC(y1, m1 - 1, d1);
+  const t2 = Date.UTC(y2, m2 - 1, d2);
+  return Math.round((t2 - t1) / 86400000);
+}
+
+function loadExamDates() {
+  try {
+    const raw = localStorage.getItem(EXAM_DATES_STORAGE_KEY);
+    if (!raw) return { korean: null, wine: null };
+    const parsed = JSON.parse(raw);
+    return { korean: parsed.korean || null, wine: parsed.wine || null };
+  } catch {
+    return { korean: null, wine: null };
+  }
 }
 
 function dueLabel(dueAt) {
@@ -164,6 +185,10 @@ export default function StudyApp() {
   const [testScore, setTestScore] = useState(0);
   const [testDone, setTestDone] = useState(false);
 
+  const [examDates, setExamDates] = useState(loadExamDates);
+  const [editingExamDate, setEditingExamDate] = useState(false);
+  const [examDateInput, setExamDateInput] = useState("");
+
   useEffect(() => {
     localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
   }, [deck]);
@@ -175,6 +200,10 @@ export default function StudyApp() {
   useEffect(() => {
     localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats));
   }, [stats]);
+
+  useEffect(() => {
+    localStorage.setItem(EXAM_DATES_STORAGE_KEY, JSON.stringify(examDates));
+  }, [examDates]);
 
   const addCard = (card) => {
     const id = newCardId();
@@ -313,6 +342,7 @@ export default function StudyApp() {
     setFormError("");
     setTestMode(false);
     setTestDone(false);
+    setEditingExamDate(false);
   };
 
   const restart = () => {
@@ -345,6 +375,22 @@ export default function StudyApp() {
     setTestMode(false);
     setTestDone(false);
     setFlipped(false);
+  };
+
+  const openExamDateEditor = () => {
+    setExamDateInput(examDates[domain] || "");
+    setEditingExamDate(true);
+  };
+
+  const saveExamDate = () => {
+    if (!examDateInput) return;
+    setExamDates((prev) => ({ ...prev, [domain]: examDateInput }));
+    setEditingExamDate(false);
+  };
+
+  const clearExamDate = () => {
+    setExamDates((prev) => ({ ...prev, [domain]: null }));
+    setEditingExamDate(false);
   };
 
   const totalMastered = Object.values(deck).filter((c) => c.domain === domain && c.box >= MASTERY_BOX).length;
@@ -556,6 +602,46 @@ export default function StudyApp() {
             );
           })}
         </div>
+
+        {/* Exam countdown */}
+        {!testMode && (
+          <div style={{ textAlign: "center", marginBottom: 10 }}>
+            {editingExamDate ? (
+              <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
+                <input
+                  type="date"
+                  value={examDateInput}
+                  onChange={(e) => setExamDateInput(e.target.value)}
+                  style={{ ...inputStyle, width: "auto", padding: "6px 8px", fontSize: 13 }}
+                />
+                <button onClick={saveExamDate} style={smallLinkButtonStyle(d.accent)}>
+                  保存
+                </button>
+                {examDates[domain] && (
+                  <button onClick={clearExamDate} style={smallLinkButtonStyle("#B0483A")}>
+                    削除
+                  </button>
+                )}
+                <button onClick={() => setEditingExamDate(false)} style={smallLinkButtonStyle("#9A9184")}>
+                  閉じる
+                </button>
+              </div>
+            ) : examDates[domain] ? (
+              <div style={{ fontSize: 12, color: d.accent, fontWeight: 600 }}>
+                {daysUntil(examDates[domain]) >= 0
+                  ? `🎯 試験まであと${daysUntil(examDates[domain])}日（${examDates[domain]}）`
+                  : "🎯 試験日を過ぎてるよ"}{" "}
+                <button onClick={openExamDateEditor} style={smallLinkButtonStyle("#9A9184")}>
+                  変更
+                </button>
+              </div>
+            ) : (
+              <button onClick={openExamDateEditor} style={smallLinkButtonStyle(d.accent, true)}>
+                🎯 {d.label}の試験日を設定する
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Stats strip */}
         {!testMode && (
@@ -1138,3 +1224,16 @@ const inputStyle = {
   fontFamily: "inherit",
   boxSizing: "border-box",
 };
+
+function smallLinkButtonStyle(color, prominent = false) {
+  return {
+    border: prominent ? `1.5px dashed ${color}` : "none",
+    background: "transparent",
+    color,
+    fontSize: prominent ? 13 : 11,
+    fontWeight: 600,
+    cursor: "pointer",
+    padding: prominent ? "6px 12px" : "2px 4px",
+    borderRadius: prominent ? 8 : 4,
+  };
+}
