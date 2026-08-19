@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2 } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -26,9 +26,14 @@ const DOMAINS = {
 
 const DECK_STORAGE_KEY = "study-srs.deck.v1";
 const DOMAIN_STORAGE_KEY = "study-srs.domain.v1";
+const STATS_STORAGE_KEY = "study-srs.stats.v1";
 
 // days until next review after each successful box level (box 1〜5)
 const INTERVALS_DAYS = [1, 3, 7, 16, 30];
+// box level considered "定着" (mastered)
+const MASTERY_BOX = 3;
+// how many cards a pop-quiz test pulls at most
+const TEST_SAMPLE_SIZE = 15;
 
 function todayStr() {
   const d = new Date();
@@ -97,8 +102,46 @@ function buildSessionQueue(deck, domain) {
     .map((c) => c.id);
 }
 
-const EMPTY_KOREAN_FORM = { ko: "", romanized: "", meaning: "", rule: "" };
-const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "" };
+function loadStats() {
+  try {
+    const raw = localStorage.getItem(STATS_STORAGE_KEY);
+    if (!raw) return { studyDates: [], masteredEvents: [], testHistory: [] };
+    const parsed = JSON.parse(raw);
+    return {
+      studyDates: Array.isArray(parsed.studyDates) ? parsed.studyDates : [],
+      masteredEvents: Array.isArray(parsed.masteredEvents) ? parsed.masteredEvents : [],
+      testHistory: Array.isArray(parsed.testHistory) ? parsed.testHistory : [],
+    };
+  } catch {
+    return { studyDates: [], masteredEvents: [], testHistory: [] };
+  }
+}
+
+// current streak of consecutive study days, anchored at today (or yesterday, so it doesn't drop to 0 before today's review)
+function computeStreak(studyDates) {
+  const set = new Set(studyDates);
+  const today = todayStr();
+  let cursor = set.has(today) ? today : addDaysStr(today, -1);
+  if (!set.has(cursor)) return 0;
+  let streak = 0;
+  while (set.has(cursor)) {
+    streak++;
+    cursor = addDaysStr(cursor, -1);
+  }
+  return streak;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const EMPTY_KOREAN_FORM = { ko: "", romanized: "", meaning: "", rule: "", source: "" };
+const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "", hypothesis: "", source: "" };
 
 export default function StudyApp() {
   const [deck, setDeck] = useState(loadDeck);
@@ -114,6 +157,13 @@ export default function StudyApp() {
   const [wineForm, setWineForm] = useState(EMPTY_WINE_FORM);
   const [formError, setFormError] = useState("");
 
+  const [stats, setStats] = useState(loadStats);
+  const [testMode, setTestMode] = useState(false);
+  const [testQueue, setTestQueue] = useState([]);
+  const [testIdx, setTestIdx] = useState(0);
+  const [testScore, setTestScore] = useState(0);
+  const [testDone, setTestDone] = useState(false);
+
   useEffect(() => {
     localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
   }, [deck]);
@@ -121,6 +171,10 @@ export default function StudyApp() {
   useEffect(() => {
     localStorage.setItem(DOMAIN_STORAGE_KEY, domain);
   }, [domain]);
+
+  useEffect(() => {
+    localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats));
+  }, [stats]);
 
   const addCard = (card) => {
     const id = newCardId();
@@ -133,20 +187,33 @@ export default function StudyApp() {
 
   const handleAddCard = () => {
     if (domain === "korean") {
-      const { ko, romanized, meaning, rule } = koreanForm;
+      const { ko, romanized, meaning, rule, source } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須だよ。");
         return;
       }
-      addCard({ ko: ko.trim(), romanized: romanized.trim(), meaning: meaning.trim(), rule: rule.trim() || "特になし" });
+      addCard({
+        ko: ko.trim(),
+        romanized: romanized.trim(),
+        meaning: meaning.trim(),
+        rule: rule.trim() || "特になし",
+        source: source.trim(),
+      });
       setKoreanForm(EMPTY_KOREAN_FORM);
     } else {
-      const { q, a, region, topic } = wineForm;
+      const { q, a, region, topic, hypothesis, source } = wineForm;
       if (!q.trim() || !a.trim()) {
         setFormError("質問と解答は必須だよ。");
         return;
       }
-      addCard({ q: q.trim(), a: a.trim(), region: region.trim() || "-", topic: topic.trim() || "その他" });
+      addCard({
+        q: q.trim(),
+        a: a.trim(),
+        region: region.trim() || "-",
+        topic: topic.trim() || "その他",
+        hypothesis: hypothesis.trim(),
+        source: source.trim(),
+      });
       setWineForm(EMPTY_WINE_FORM);
     }
     setFormError("");
@@ -174,7 +241,7 @@ export default function StudyApp() {
     [deck, domain]
   );
 
-  const current = deck[sessionQueue[queueIdx]];
+  const current = testMode ? deck[testQueue[testIdx]] : deck[sessionQueue[queueIdx]];
   const d = DOMAINS[domain];
 
   const speak = (text) => {
@@ -188,19 +255,44 @@ export default function StudyApp() {
 
   const handleAnswer = (correct) => {
     const cardId = current.id;
+    const today = todayStr();
+
+    if (testMode) {
+      const newScore = testScore + (correct ? 1 : 0);
+      setTestScore(newScore);
+      setFlipped(false);
+      if (testIdx + 1 >= testQueue.length) {
+        setStats((prev) => ({
+          ...prev,
+          testHistory: [...prev.testHistory, { date: today, domain, correct: newScore, total: testQueue.length }],
+        }));
+        setTestDone(true);
+      } else {
+        setTestIdx((i) => i + 1);
+      }
+      return;
+    }
+
+    const prevBox = deck[cardId].box;
+    let box, interval, dueAt;
+    if (correct) {
+      box = Math.min(prevBox + 1, INTERVALS_DAYS.length);
+      interval = INTERVALS_DAYS[box - 1];
+      dueAt = addDaysStr(today, interval);
+    } else {
+      box = 0;
+      interval = 0;
+      dueAt = today;
+    }
     setDeck((prev) => {
       const c = prev[cardId];
-      let box, interval, dueAt;
-      if (correct) {
-        box = Math.min(c.box + 1, INTERVALS_DAYS.length);
-        interval = INTERVALS_DAYS[box - 1];
-        dueAt = addDaysStr(todayStr(), interval);
-      } else {
-        box = 0;
-        interval = 0;
-        dueAt = todayStr();
-      }
       return { ...prev, [cardId]: { ...c, box, interval, dueAt, seen: c.seen + 1, correct: c.correct + (correct ? 1 : 0) } };
+    });
+    setStats((prev) => {
+      const studyDates = prev.studyDates.includes(today) ? prev.studyDates : [...prev.studyDates, today];
+      const justMastered = correct && box >= MASTERY_BOX && prevBox < MASTERY_BOX;
+      const masteredEvents = justMastered ? [...prev.masteredEvents, { date: today, domain, cardId }] : prev.masteredEvents;
+      return { ...prev, studyDates, masteredEvents };
     });
     setFlipped(false);
     if (queueIdx + 1 >= sessionQueue.length) {
@@ -219,6 +311,8 @@ export default function StudyApp() {
     setShowInput(false);
     setShowList(false);
     setFormError("");
+    setTestMode(false);
+    setTestDone(false);
   };
 
   const restart = () => {
@@ -235,13 +329,154 @@ export default function StudyApp() {
     setSessionDone(false);
   };
 
-  const totalMastered = Object.values(deck).filter((c) => c.domain === domain && c.box >= 3).length;
+  const startTest = () => {
+    const ids = shuffle(domainCards.map((c) => c.id)).slice(0, TEST_SAMPLE_SIZE);
+    setTestQueue(ids);
+    setTestIdx(0);
+    setTestScore(0);
+    setTestDone(false);
+    setTestMode(true);
+    setFlipped(false);
+    setShowInput(false);
+    setShowList(false);
+  };
+
+  const cancelTest = () => {
+    setTestMode(false);
+    setTestDone(false);
+    setFlipped(false);
+  };
+
+  const totalMastered = Object.values(deck).filter((c) => c.domain === domain && c.box >= MASTERY_BOX).length;
   const totalCards = domainCards.length;
   const sessionTotal = sessionQueue.length;
   const nextDueDate = domainCards
     .map((c) => c.dueAt)
     .filter(Boolean)
     .sort()[0];
+
+  const streak = computeStreak(stats.studyDates);
+  const weekStart = addDaysStr(todayStr(), -6);
+  const weeklyMastered = stats.masteredEvents.filter((e) => e.domain === domain && e.date >= weekStart).length;
+  const lastTest = [...stats.testHistory].reverse().find((t) => t.domain === domain);
+
+  const reviewActive = testMode ? !testDone && !!current : totalCards > 0 && sessionTotal > 0 && !sessionDone && !!current;
+
+  const flipCardEl = current && (
+    <div
+      onClick={() => setFlipped((f) => !f)}
+      style={{
+        background: "#FFFFFF",
+        borderRadius: 16,
+        minHeight: 260,
+        padding: 28,
+        boxShadow: "0 8px 24px rgba(43,38,32,0.08)",
+        border: `1px solid ${d.accentSoft}`,
+        cursor: "pointer",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        position: "relative",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: 18,
+          left: 24,
+          fontSize: 11,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: d.accent,
+          fontWeight: 600,
+        }}
+      >
+        {domain === "korean" ? "発音カード" : current.region}
+      </div>
+
+      {!flipped ? (
+        domain === "korean" ? (
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: "'IBM Plex Sans KR', sans-serif",
+                fontSize: 40,
+                fontWeight: 700,
+                marginBottom: 20,
+              }}
+            >
+              {current.ko}
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                speak(current.ko);
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                background: d.accentSoft,
+                color: d.accent,
+                border: "none",
+                borderRadius: 999,
+                padding: "8px 16px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <Volume2 size={15} /> 音声を聞く
+            </button>
+            <div style={{ marginTop: 16, fontSize: 12, color: "#9A9184" }}>タップして意味を確認</div>
+          </div>
+        ) : (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, lineHeight: 1.5, marginBottom: 8 }}>
+              {current.q}
+            </div>
+            <div style={{ fontSize: 12, color: "#9A9184", marginTop: 16 }}>タップして解答を確認</div>
+          </div>
+        )
+      ) : domain === "korean" ? (
+        <div>
+          <div style={{ fontSize: 13, color: "#9A9184", marginBottom: 4 }}>{current.romanized}</div>
+          <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 24, fontWeight: 600, marginBottom: 14 }}>
+            {current.meaning}
+          </div>
+          <div
+            style={{
+              background: d.accentSoft,
+              borderRadius: 10,
+              padding: "12px 14px",
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: "#3A3630",
+            }}
+          >
+            <span style={{ fontWeight: 700, color: d.accent }}>発音ルール　</span>
+            {current.rule}
+          </div>
+          {current.source && (
+            <div style={{ fontSize: 11, color: "#9A9184", marginTop: 10 }}>📎 {current.source}</div>
+          )}
+        </div>
+      ) : (
+        <div>
+          <div style={{ fontSize: 11, color: d.accent, fontWeight: 600, marginBottom: 6 }}>{current.topic}</div>
+          <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 19, fontWeight: 600, lineHeight: 1.5 }}>
+            {current.a}
+          </div>
+          {current.hypothesis && (
+            <div style={{ fontSize: 12, color: "#9A9184", marginTop: 10 }}>💭 最初の仮説: {current.hypothesis}</div>
+          )}
+          {current.source && (
+            <div style={{ fontSize: 11, color: "#9A9184", marginTop: 6 }}>📎 {current.source}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div
@@ -322,7 +557,31 @@ export default function StudyApp() {
           })}
         </div>
 
+        {/* Stats strip */}
+        {!testMode && (
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: 11,
+              color: "#9A9184",
+              marginBottom: 14,
+              lineHeight: 1.7,
+            }}
+          >
+            <div>
+              🔥 連続{streak}日　定着 今週+{weeklyMastered}枚
+            </div>
+            {lastTest && (
+              <div>
+                前回テスト {Math.round((lastTest.correct / lastTest.total) * 100)}%（{lastTest.correct}/{lastTest.total}）・
+                {dueLabel(lastTest.date) === "今日" ? "今日" : lastTest.date}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Add today's learning */}
+        {!testMode && (
         <div style={{ marginBottom: 20 }}>
           {!showInput && !showList ? (
             <div style={{ display: "flex", gap: 8 }}>
@@ -370,6 +629,28 @@ export default function StudyApp() {
               >
                 <List size={16} />
                 一覧
+              </button>
+              <button
+                onClick={startTest}
+                disabled={totalCards === 0}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "12px 0",
+                  borderRadius: 10,
+                  border: "1.5px solid #E4DFD3",
+                  background: "transparent",
+                  color: totalCards === 0 ? "#C9C2B4" : "#6B6355",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: totalCards === 0 ? "default" : "pointer",
+                }}
+              >
+                <Target size={16} />
+                テスト
               </button>
             </div>
           ) : showList ? (
@@ -422,6 +703,12 @@ export default function StudyApp() {
                         <div style={{ fontSize: 12, color: "#9A9184", marginTop: 2 }}>
                           {domain === "korean" ? c.meaning : c.a}
                         </div>
+                        {domain === "wine" && c.hypothesis && (
+                          <div style={{ fontSize: 11, color: "#9A9184", marginTop: 2 }}>💭 仮説: {c.hypothesis}</div>
+                        )}
+                        {c.source && (
+                          <div style={{ fontSize: 11, color: "#9A9184", marginTop: 2 }}>📎 {c.source}</div>
+                        )}
                         <div style={{ fontSize: 11, color: d.accent, marginTop: 4 }}>
                           Box {c.box}・{c.correct}/{c.seen} 正解・次回 {dueLabel(c.dueAt)}
                         </div>
@@ -480,6 +767,12 @@ export default function StudyApp() {
                     placeholder="発音ルール・メモ（任意）"
                     style={{ ...inputStyle, minHeight: 60, resize: "vertical" }}
                   />
+                  <input
+                    value={koreanForm.source}
+                    onChange={(e) => setKoreanForm((f) => ({ ...f, source: e.target.value }))}
+                    placeholder="出典（例: 〇〇というドラマ／曲名）任意"
+                    style={inputStyle}
+                  />
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
@@ -505,6 +798,18 @@ export default function StudyApp() {
                     value={wineForm.topic}
                     onChange={(e) => setWineForm((f) => ({ ...f, topic: e.target.value }))}
                     placeholder="トピック（例: 産地・品種）"
+                    style={inputStyle}
+                  />
+                  <textarea
+                    value={wineForm.hypothesis}
+                    onChange={(e) => setWineForm((f) => ({ ...f, hypothesis: e.target.value }))}
+                    placeholder="調べる前の自分の仮説（あれば・任意）"
+                    style={{ ...inputStyle, minHeight: 50, resize: "vertical" }}
+                  />
+                  <input
+                    value={wineForm.source}
+                    onChange={(e) => setWineForm((f) => ({ ...f, source: e.target.value }))}
+                    placeholder="出典（任意）"
                     style={inputStyle}
                   />
                 </div>
@@ -556,9 +861,10 @@ export default function StudyApp() {
             </div>
           )}
         </div>
+        )}
 
         {/* Progress */}
-        {totalCards > 0 && sessionTotal > 0 && (
+        {!testMode && totalCards > 0 && sessionTotal > 0 && (
           <div
             style={{
               display: "flex",
@@ -579,8 +885,79 @@ export default function StudyApp() {
           </div>
         )}
 
+        {/* Test mode header */}
+        {testMode && !testDone && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 14,
+              fontSize: 13,
+              color: "#6B6355",
+            }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <Target size={14} color={d.accent} />
+              テスト中 {testIdx + 1} / {testQueue.length}
+            </span>
+            <button
+              onClick={cancelTest}
+              style={{ border: "none", background: "transparent", color: "#9A9184", fontSize: 12, cursor: "pointer" }}
+            >
+              やめる
+            </button>
+          </div>
+        )}
+
         {/* Card */}
-        {totalCards === 0 ? (
+        {testMode ? (
+          testDone ? (
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: 16,
+                minHeight: 260,
+                padding: 28,
+                boxShadow: "0 8px 24px rgba(43,38,32,0.08)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                gap: 10,
+              }}
+            >
+              <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 18, fontWeight: 600 }}>テスト結果</div>
+              <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 36, fontWeight: 700, color: d.accent }}>
+                {testScore} / {testQueue.length}
+              </div>
+              <div style={{ fontSize: 13, color: "#6B6355" }}>
+                正答率 {Math.round((testScore / testQueue.length) * 100)}%
+              </div>
+              <button
+                onClick={cancelTest}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: d.accent,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 999,
+                  padding: "10px 20px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                閉じる
+              </button>
+            </div>
+          ) : (
+            flipCardEl
+          )
+        ) : totalCards === 0 ? (
           <div
             style={{
               background: "#FFFFFF",
@@ -643,110 +1020,7 @@ export default function StudyApp() {
             </button>
           </div>
         ) : !sessionDone ? (
-          <div
-            onClick={() => setFlipped((f) => !f)}
-            style={{
-              background: "#FFFFFF",
-              borderRadius: 16,
-              minHeight: 260,
-              padding: 28,
-              boxShadow: "0 8px 24px rgba(43,38,32,0.08)",
-              border: `1px solid ${d.accentSoft}`,
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: 18,
-                left: 24,
-                fontSize: 11,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: d.accent,
-                fontWeight: 600,
-              }}
-            >
-              {domain === "korean" ? "発音カード" : current.region}
-            </div>
-
-            {!flipped ? (
-              domain === "korean" ? (
-                <div style={{ textAlign: "center" }}>
-                  <div
-                    style={{
-                      fontFamily: "'IBM Plex Sans KR', sans-serif",
-                      fontSize: 40,
-                      fontWeight: 700,
-                      marginBottom: 20,
-                    }}
-                  >
-                    {current.ko}
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      speak(current.ko);
-                    }}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      background: d.accentSoft,
-                      color: d.accent,
-                      border: "none",
-                      borderRadius: 999,
-                      padding: "8px 16px",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Volume2 size={15} /> 音声を聞く
-                  </button>
-                  <div style={{ marginTop: 16, fontSize: 12, color: "#9A9184" }}>タップして意味を確認</div>
-                </div>
-              ) : (
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, lineHeight: 1.5, marginBottom: 8 }}>
-                    {current.q}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#9A9184", marginTop: 16 }}>タップして解答を確認</div>
-                </div>
-              )
-            ) : domain === "korean" ? (
-              <div>
-                <div style={{ fontSize: 13, color: "#9A9184", marginBottom: 4 }}>{current.romanized}</div>
-                <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 24, fontWeight: 600, marginBottom: 14 }}>
-                  {current.meaning}
-                </div>
-                <div
-                  style={{
-                    background: d.accentSoft,
-                    borderRadius: 10,
-                    padding: "12px 14px",
-                    fontSize: 13,
-                    lineHeight: 1.6,
-                    color: "#3A3630",
-                  }}
-                >
-                  <span style={{ fontWeight: 700, color: d.accent }}>発音ルール　</span>
-                  {current.rule}
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div style={{ fontSize: 11, color: d.accent, fontWeight: 600, marginBottom: 6 }}>{current.topic}</div>
-                <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 19, fontWeight: 600, lineHeight: 1.5 }}>
-                  {current.a}
-                </div>
-              </div>
-            )}
-          </div>
+          flipCardEl
         ) : (
           <div
             style={{
@@ -791,7 +1065,7 @@ export default function StudyApp() {
         )}
 
         {/* Answer buttons */}
-        {!sessionDone && flipped && (
+        {reviewActive && flipped && (
           <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
             <button
               onClick={() => handleAnswer(false)}
@@ -838,11 +1112,17 @@ export default function StudyApp() {
 
         {/* Box legend */}
         <div style={{ marginTop: 22, fontSize: 11, color: "#9A9184", textAlign: "center", lineHeight: 1.6 }}>
-          「わかった」を選ぶと次の復習日が1→3→7→16→30日後と延びていきます。
-          <br />
-          「まだ不安」を選ぶと今日中にもう一度出てきます。
-          <br />
-          追加したカードと学習状況はこの端末に自動で保存されます。
+          {testMode ? (
+            "テストの結果はBoxや復習日には影響しないよ（力試し用）。"
+          ) : (
+            <>
+              「わかった」を選ぶと次の復習日が1→3→7→16→30日後と延びていきます。
+              <br />
+              「まだ不安」を選ぶと今日中にもう一度出てきます。
+              <br />
+              追加したカードと学習状況はこの端末に自動で保存されます。
+            </>
+          )}
         </div>
       </div>
     </div>
