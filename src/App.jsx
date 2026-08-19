@@ -164,6 +164,9 @@ function shuffle(arr) {
 const EMPTY_KOREAN_FORM = { ko: "", romanized: "", meaning: "", rule: "", source: "" };
 const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "", hypothesis: "", source: "" };
 
+const KOREAN_SOURCE_OPTIONS = ["1行日記", "できる韓国語", "音楽", "ドラマ"];
+const WINE_SOURCE_OPTIONS = ["1冊目の教科書"];
+
 export default function StudyApp() {
   const [deck, setDeck] = useState(loadDeck);
   const [domain, setDomain] = useState(loadDomain);
@@ -961,12 +964,18 @@ export default function StudyApp() {
                     placeholder="発音ルール・メモ（任意）"
                     style={{ ...inputStyle, minHeight: 60, resize: "vertical" }}
                   />
-                  <input
+                  <select
                     value={koreanForm.source}
                     onChange={(e) => setKoreanForm((f) => ({ ...f, source: e.target.value }))}
-                    placeholder="出典（例: 〇〇というドラマ／曲名）任意"
                     style={inputStyle}
-                  />
+                  >
+                    <option value="">出典を選ぶ（任意）</option>
+                    {KOREAN_SOURCE_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
@@ -1000,12 +1009,18 @@ export default function StudyApp() {
                     placeholder="調べる前の自分の仮説（あれば・任意）"
                     style={{ ...inputStyle, minHeight: 50, resize: "vertical" }}
                   />
-                  <input
+                  <select
                     value={wineForm.source}
                     onChange={(e) => setWineForm((f) => ({ ...f, source: e.target.value }))}
-                    placeholder="出典（任意）"
                     style={inputStyle}
-                  />
+                  >
+                    <option value="">出典を選ぶ（任意）</option>
+                    {WINE_SOURCE_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
               {formError && <div style={{ color: "#B0483A", fontSize: 12, marginBottom: 8 }}>{formError}</div>}
