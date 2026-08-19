@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -177,6 +177,7 @@ export default function StudyApp() {
   const [koreanForm, setKoreanForm] = useState(EMPTY_KOREAN_FORM);
   const [wineForm, setWineForm] = useState(EMPTY_WINE_FORM);
   const [formError, setFormError] = useState("");
+  const [editingCardId, setEditingCardId] = useState(null);
 
   const [stats, setStats] = useState(loadStats);
   const [testMode, setTestMode] = useState(false);
@@ -249,6 +250,85 @@ export default function StudyApp() {
     setShowInput(false);
   };
 
+  const openEditCard = (card) => {
+    if (card.domain === "korean") {
+      setKoreanForm({
+        ko: card.ko || "",
+        romanized: card.romanized || "",
+        meaning: card.meaning || "",
+        rule: card.rule === "特になし" ? "" : card.rule || "",
+        source: card.source || "",
+      });
+    } else {
+      setWineForm({
+        q: card.q || "",
+        a: card.a || "",
+        region: card.region === "-" ? "" : card.region || "",
+        topic: card.topic === "その他" ? "" : card.topic || "",
+        hypothesis: card.hypothesis || "",
+        source: card.source || "",
+      });
+    }
+    setEditingCardId(card.id);
+    setFormError("");
+    setShowList(false);
+    setShowInput(true);
+  };
+
+  const handleEditCard = () => {
+    if (domain === "korean") {
+      const { ko, romanized, meaning, rule, source } = koreanForm;
+      if (!ko.trim() || !meaning.trim()) {
+        setFormError("韓国語と意味は必須だよ。");
+        return;
+      }
+      setDeck((prev) => ({
+        ...prev,
+        [editingCardId]: {
+          ...prev[editingCardId],
+          ko: ko.trim(),
+          romanized: romanized.trim(),
+          meaning: meaning.trim(),
+          rule: rule.trim() || "特になし",
+          source: source.trim(),
+        },
+      }));
+      setKoreanForm(EMPTY_KOREAN_FORM);
+    } else {
+      const { q, a, region, topic, hypothesis, source } = wineForm;
+      if (!q.trim() || !a.trim()) {
+        setFormError("質問と解答は必須だよ。");
+        return;
+      }
+      setDeck((prev) => ({
+        ...prev,
+        [editingCardId]: {
+          ...prev[editingCardId],
+          q: q.trim(),
+          a: a.trim(),
+          region: region.trim() || "-",
+          topic: topic.trim() || "その他",
+          hypothesis: hypothesis.trim(),
+          source: source.trim(),
+        },
+      }));
+      setWineForm(EMPTY_WINE_FORM);
+    }
+    setFormError("");
+    setEditingCardId(null);
+    setShowInput(false);
+    setShowList(true);
+  };
+
+  const cancelForm = () => {
+    setShowInput(false);
+    setKoreanForm(EMPTY_KOREAN_FORM);
+    setWineForm(EMPTY_WINE_FORM);
+    setFormError("");
+    if (editingCardId) setShowList(true);
+    setEditingCardId(null);
+  };
+
   const handleDeleteCard = (id) => {
     if (!window.confirm("このカードを削除する？元に戻せないよ。")) return;
     setDeck((prev) => {
@@ -257,6 +337,10 @@ export default function StudyApp() {
       return next;
     });
     setSessionQueue((q) => q.filter((qid) => qid !== id));
+    if (editingCardId === id) {
+      setEditingCardId(null);
+      setShowInput(false);
+    }
     setQueueIdx(0);
     setFlipped(false);
     setSessionDone(false);
@@ -343,6 +427,9 @@ export default function StudyApp() {
     setTestMode(false);
     setTestDone(false);
     setEditingExamDate(false);
+    setEditingCardId(null);
+    setKoreanForm(EMPTY_KOREAN_FORM);
+    setWineForm(EMPTY_WINE_FORM);
   };
 
   const restart = () => {
@@ -799,6 +886,20 @@ export default function StudyApp() {
                           Box {c.box}・{c.correct}/{c.seen} 正解・次回 {dueLabel(c.dueAt)}
                         </div>
                       </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+                      <button
+                        onClick={() => openEditCard(c)}
+                        aria-label="編集"
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          color: d.accent,
+                          cursor: "pointer",
+                          padding: 4,
+                        }}
+                      >
+                        <Pencil size={16} />
+                      </button>
                       <button
                         onClick={() => handleDeleteCard(c.id)}
                         aria-label="削除"
@@ -813,6 +914,7 @@ export default function StudyApp() {
                       >
                         <Trash2 size={16} />
                       </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -827,6 +929,12 @@ export default function StudyApp() {
                 border: `1px solid ${d.accentSoft}`,
               }}
             >
+              {editingCardId && (
+                <div style={{ fontSize: 12, fontWeight: 600, color: d.accent, marginBottom: 10 }}>
+                  <Pencil size={12} style={{ marginRight: 4, verticalAlign: "middle" }} />
+                  カードを編集中
+                </div>
+              )}
               {domain === "korean" ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                   <input
@@ -903,12 +1011,7 @@ export default function StudyApp() {
               {formError && <div style={{ color: "#B0483A", fontSize: 12, marginBottom: 8 }}>{formError}</div>}
               <div style={{ display: "flex", gap: 8 }}>
                 <button
-                  onClick={() => {
-                    setShowInput(false);
-                    setKoreanForm(EMPTY_KOREAN_FORM);
-                    setWineForm(EMPTY_WINE_FORM);
-                    setFormError("");
-                  }}
+                  onClick={cancelForm}
                   style={{
                     flex: 1,
                     padding: "10px 0",
@@ -924,7 +1027,7 @@ export default function StudyApp() {
                   キャンセル
                 </button>
                 <button
-                  onClick={handleAddCard}
+                  onClick={editingCardId ? handleEditCard : handleAddCard}
                   style={{
                     flex: 2,
                     display: "flex",
@@ -941,7 +1044,15 @@ export default function StudyApp() {
                     cursor: "pointer",
                   }}
                 >
-                  <Plus size={14} /> カードを追加
+                  {editingCardId ? (
+                    <>
+                      <Check size={14} /> 保存
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={14} /> カードを追加
+                    </>
+                  )}
                 </button>
               </div>
             </div>
