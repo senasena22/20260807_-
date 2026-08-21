@@ -28,6 +28,7 @@ const DECK_STORAGE_KEY = "study-srs.deck.v1";
 const DOMAIN_STORAGE_KEY = "study-srs.domain.v1";
 const STATS_STORAGE_KEY = "study-srs.stats.v1";
 const EXAM_DATES_STORAGE_KEY = "study-srs.examDates.v1";
+const MATERIALS_STORAGE_KEY = "study-srs.materials.v1";
 
 // days until next review after each successful box level (box 1〜5)
 const INTERVALS_DAYS = [1, 3, 7, 16, 30];
@@ -60,6 +61,17 @@ function daysUntil(dateStr) {
 function loadExamDates() {
   try {
     const raw = localStorage.getItem(EXAM_DATES_STORAGE_KEY);
+    if (!raw) return { korean: null, wine: null };
+    const parsed = JSON.parse(raw);
+    return { korean: parsed.korean || null, wine: parsed.wine || null };
+  } catch {
+    return { korean: null, wine: null };
+  }
+}
+
+function loadMaterials() {
+  try {
+    const raw = localStorage.getItem(MATERIALS_STORAGE_KEY);
     if (!raw) return { korean: null, wine: null };
     const parsed = JSON.parse(raw);
     return { korean: parsed.korean || null, wine: parsed.wine || null };
@@ -230,6 +242,11 @@ export default function StudyApp() {
 
   const [showCalendar, setShowCalendar] = useState(false);
 
+  const [page, setPage] = useState("review");
+  const [materials, setMaterials] = useState(loadMaterials);
+  const [editingMaterial, setEditingMaterial] = useState(false);
+  const [materialForm, setMaterialForm] = useState({ name: "", totalUnits: "", currentUnit: "", daysPerUnit: "" });
+
   useEffect(() => {
     localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
   }, [deck]);
@@ -245,6 +262,10 @@ export default function StudyApp() {
   useEffect(() => {
     localStorage.setItem(EXAM_DATES_STORAGE_KEY, JSON.stringify(examDates));
   }, [examDates]);
+
+  useEffect(() => {
+    localStorage.setItem(MATERIALS_STORAGE_KEY, JSON.stringify(materials));
+  }, [materials]);
 
   const addCard = (card) => {
     const id = newCardId();
@@ -495,6 +516,7 @@ export default function StudyApp() {
     setEditingCardId(null);
     setKoreanForm(EMPTY_KOREAN_FORM);
     setWineForm(EMPTY_WINE_FORM);
+    setEditingMaterial(false);
   };
 
   const restart = () => {
@@ -545,6 +567,44 @@ export default function StudyApp() {
     setEditingExamDate(false);
   };
 
+  const openMaterialEditor = () => {
+    const m = materials[domain];
+    setMaterialForm(
+      m
+        ? { name: m.name, totalUnits: String(m.totalUnits), currentUnit: String(m.currentUnit), daysPerUnit: String(m.daysPerUnit) }
+        : { name: "", totalUnits: "", currentUnit: "", daysPerUnit: "" }
+    );
+    setEditingMaterial(true);
+  };
+
+  const saveMaterial = () => {
+    const totalUnits = Number(materialForm.totalUnits);
+    const currentUnit = Number(materialForm.currentUnit);
+    const daysPerUnit = Number(materialForm.daysPerUnit);
+    if (!materialForm.name.trim() || !(totalUnits > 0) || !(daysPerUnit > 0) || Number.isNaN(currentUnit) || currentUnit < 0) {
+      return;
+    }
+    setMaterials((prev) => ({
+      ...prev,
+      [domain]: { name: materialForm.name.trim(), totalUnits, currentUnit, daysPerUnit },
+    }));
+    setEditingMaterial(false);
+  };
+
+  const clearMaterial = () => {
+    setMaterials((prev) => ({ ...prev, [domain]: null }));
+    setEditingMaterial(false);
+  };
+
+  const bumpMaterialProgress = (delta) => {
+    setMaterials((prev) => {
+      const m = prev[domain];
+      if (!m) return prev;
+      const nextUnit = Math.max(0, Math.min(m.totalUnits, m.currentUnit + delta));
+      return { ...prev, [domain]: { ...m, currentUnit: nextUnit } };
+    });
+  };
+
   const totalMastered = Object.values(deck).filter((c) => c.domain === domain && c.box >= MASTERY_BOX).length;
   const totalCards = domainCards.length;
   const sessionTotal = sessionQueue.length;
@@ -558,6 +618,13 @@ export default function StudyApp() {
   const weeklyMastered = stats.masteredEvents.filter((e) => e.domain === domain && e.date >= weekStart).length;
   const lastTest = [...stats.testHistory].reverse().find((t) => t.domain === domain);
   const calendarDays = useMemo(() => buildCalendarDays(stats.studyDates), [stats.studyDates]);
+
+  const material = materials[domain];
+  const materialRemaining = material ? Math.max(0, material.totalUnits - material.currentUnit) : 0;
+  const materialDaysNeeded = material ? materialRemaining * material.daysPerUnit : 0;
+  const materialFinishDate = material ? addDaysStr(todayStr(), materialDaysNeeded) : null;
+  const examDaysLeft = examDates[domain] ? daysUntil(examDates[domain]) : null;
+  const materialBuffer = material && examDaysLeft !== null ? examDaysLeft - materialDaysNeeded : null;
 
   const handleShare = async () => {
     try {
@@ -791,8 +858,56 @@ export default function StudyApp() {
           })}
         </div>
 
+        {/* Page nav */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          <button
+            onClick={() => setPage("review")}
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              padding: "10px 10px",
+              borderRadius: 10,
+              border: page === "review" ? `2px solid ${d.accent}` : "2px solid transparent",
+              background: page === "review" ? d.accentSoft : "#E4DFD3",
+              color: page === "review" ? d.accent : "#6B6355",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            📚 復習
+          </button>
+          <button
+            onClick={() => {
+              setPage("plan");
+              setTestMode(false);
+              setTestDone(false);
+            }}
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              padding: "10px 10px",
+              borderRadius: 10,
+              border: page === "plan" ? `2px solid ${d.accent}` : "2px solid transparent",
+              background: page === "plan" ? d.accentSoft : "#E4DFD3",
+              color: page === "plan" ? d.accent : "#6B6355",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            🗓️ 計画
+          </button>
+        </div>
+
         {/* Exam countdown */}
-        {!testMode && (
+        {page === "plan" && (
           <div style={{ textAlign: "center", marginBottom: 10 }}>
             {editingExamDate ? (
               <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
@@ -831,8 +946,172 @@ export default function StudyApp() {
           </div>
         )}
 
+        {/* Material progress */}
+        {page === "plan" && (
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 14,
+              border: `1px solid ${d.accentSoft}`,
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6355", marginBottom: 10 }}>📖 教材の進み具合</div>
+            {editingMaterial ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <input
+                  value={materialForm.name}
+                  onChange={(e) => setMaterialForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="教材名（例: できる韓国語）"
+                  style={inputStyle}
+                />
+                <input
+                  type="number"
+                  min="1"
+                  value={materialForm.totalUnits}
+                  onChange={(e) => setMaterialForm((f) => ({ ...f, totalUnits: e.target.value }))}
+                  placeholder="全体の量（例: 20課なら20）"
+                  style={inputStyle}
+                />
+                <input
+                  type="number"
+                  min="0"
+                  value={materialForm.currentUnit}
+                  onChange={(e) => setMaterialForm((f) => ({ ...f, currentUnit: e.target.value }))}
+                  placeholder="今の進み（例: 7課まで終わってたら7）"
+                  style={inputStyle}
+                />
+                <input
+                  type="number"
+                  min="1"
+                  value={materialForm.daysPerUnit}
+                  onChange={(e) => setMaterialForm((f) => ({ ...f, daysPerUnit: e.target.value }))}
+                  placeholder="1つあたり何日かかりそうか（土日休みなども含めた体感でOK）"
+                  style={inputStyle}
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => setEditingMaterial(false)}
+                    style={{
+                      flex: 1,
+                      padding: "10px 0",
+                      borderRadius: 8,
+                      border: "1px solid #E4DFD3",
+                      background: "transparent",
+                      color: "#6B6355",
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: "pointer",
+                    }}
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    onClick={saveMaterial}
+                    style={{
+                      flex: 2,
+                      padding: "10px 0",
+                      borderRadius: 8,
+                      border: "none",
+                      background: d.accent,
+                      color: "#fff",
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: "pointer",
+                    }}
+                  >
+                    保存
+                  </button>
+                </div>
+                {material && (
+                  <button onClick={clearMaterial} style={{ ...smallLinkButtonStyle("#B0483A"), alignSelf: "center" }}>
+                    この教材の登録を削除
+                  </button>
+                )}
+              </div>
+            ) : material ? (
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{material.name}</div>
+                <div style={{ fontSize: 12, color: "#6B6355", marginTop: 4 }}>
+                  {material.currentUnit} / {material.totalUnits}（残り{materialRemaining}）
+                </div>
+                <div style={{ height: 8, background: "#E4DFD3", borderRadius: 4, marginTop: 8, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${material.totalUnits > 0 ? Math.min(100, (material.currentUnit / material.totalUnits) * 100) : 0}%`,
+                      background: d.accent,
+                    }}
+                  />
+                </div>
+                {materialRemaining > 0 ? (
+                  <div style={{ fontSize: 12, color: "#6B6355", marginTop: 10 }}>
+                    このペースだと <strong>{materialFinishDate}</strong> ごろ完了予定
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, color: d.accent, fontWeight: 600, marginTop: 10 }}>一周完了です！🎉</div>
+                )}
+                {materialRemaining > 0 && examDaysLeft !== null && (
+                  <div
+                    style={{
+                      fontSize: 12,
+                      marginTop: 6,
+                      color: materialBuffer >= 0 ? d.accent : "#B0483A",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {materialBuffer >= 0
+                      ? `順調！試験まで${materialBuffer}日の余裕があるよ`
+                      : `このペースだと${Math.abs(materialBuffer)}日足りないかも。ペースか試験日を見直してみて`}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <button
+                    onClick={() => bumpMaterialProgress(1)}
+                    disabled={materialRemaining === 0}
+                    style={{
+                      flex: 1,
+                      padding: "8px 0",
+                      borderRadius: 8,
+                      border: "none",
+                      background: materialRemaining === 0 ? "#E4DFD3" : d.accentSoft,
+                      color: materialRemaining === 0 ? "#9A9184" : d.accent,
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: materialRemaining === 0 ? "default" : "pointer",
+                    }}
+                  >
+                    +1進んだ
+                  </button>
+                  <button
+                    onClick={openMaterialEditor}
+                    style={{
+                      flex: 1,
+                      padding: "8px 0",
+                      borderRadius: 8,
+                      border: "1px solid #E4DFD3",
+                      background: "transparent",
+                      color: "#6B6355",
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: "pointer",
+                    }}
+                  >
+                    編集
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={openMaterialEditor} style={smallLinkButtonStyle(d.accent, true)}>
+                📖 教材を登録する
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Stats strip */}
-        {!testMode && (
+        {page === "plan" && (
           <div
             style={{
               textAlign: "center",
@@ -855,7 +1134,7 @@ export default function StudyApp() {
         )}
 
         {/* Calendar / share */}
-        {!testMode && (
+        {page === "plan" && (
           <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 14 }}>
             <button onClick={() => setShowCalendar((v) => !v)} style={smallLinkButtonStyle(d.accent, true)}>
               📅 {showCalendar ? "カレンダーを閉じる" : "カレンダー"}
@@ -866,7 +1145,7 @@ export default function StudyApp() {
           </div>
         )}
 
-        {!testMode && showCalendar && (
+        {page === "plan" && showCalendar && (
           <div
             style={{
               background: "#FFFFFF",
@@ -904,6 +1183,8 @@ export default function StudyApp() {
           </div>
         )}
 
+        {page === "review" && (
+        <>
         {/* Add today's learning */}
         {!testMode && (
         <div style={{ marginBottom: 20 }}>
@@ -1487,6 +1768,8 @@ export default function StudyApp() {
             </>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );
