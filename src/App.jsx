@@ -171,6 +171,22 @@ function computeStreak(studyDates) {
   return streak;
 }
 
+const CALENDAR_WEEKS = 12;
+
+function buildCalendarDays(studyDates) {
+  const set = new Set(studyDates);
+  const today = new Date();
+  const days = [];
+  const totalDays = CALENDAR_WEEKS * 7;
+  for (let i = totalDays - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    days.push({ date: key, studied: set.has(key) });
+  }
+  return days;
+}
+
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -211,6 +227,8 @@ export default function StudyApp() {
   const [examDates, setExamDates] = useState(loadExamDates);
   const [editingExamDate, setEditingExamDate] = useState(false);
   const [examDateInput, setExamDateInput] = useState("");
+
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
@@ -539,6 +557,42 @@ export default function StudyApp() {
   const weekStart = addDaysStr(todayStr(), -6);
   const weeklyMastered = stats.masteredEvents.filter((e) => e.domain === domain && e.date >= weekStart).length;
   const lastTest = [...stats.testHistory].reverse().find((t) => t.domain === domain);
+  const calendarDays = useMemo(() => buildCalendarDays(stats.studyDates), [stats.studyDates]);
+
+  const handleShare = async () => {
+    try {
+      const canvas = await generateShareImage({
+        domainLabel: d.label,
+        accent: d.accent,
+        accentSoft: d.accentSoft,
+        streak,
+        weeklyMastered,
+        totalMastered,
+        totalCards,
+        calendarDays,
+      });
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `study-srs-${domain}-${todayStr()}.png`, { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "study-srs 進捗" });
+            return;
+          } catch {
+            // user cancelled the share sheet; fall back to download below
+          }
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    } catch {
+      window.alert("画像の生成に失敗したよ。もう一度試してみて。");
+    }
+  };
 
   const reviewActive = testMode ? !testDone && !!current : totalCards > 0 && sessionTotal > 0 && !sessionDone && !!current;
 
@@ -797,6 +851,56 @@ export default function StudyApp() {
                 {dueLabel(lastTest.date) === "今日" ? "今日" : lastTest.date}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Calendar / share */}
+        {!testMode && (
+          <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 14 }}>
+            <button onClick={() => setShowCalendar((v) => !v)} style={smallLinkButtonStyle(d.accent, true)}>
+              📅 {showCalendar ? "カレンダーを閉じる" : "カレンダー"}
+            </button>
+            <button onClick={handleShare} style={smallLinkButtonStyle(d.accent, true)}>
+              📤 進捗をシェア
+            </button>
+          </div>
+        )}
+
+        {!testMode && showCalendar && (
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 14,
+              border: `1px solid ${d.accentSoft}`,
+            }}
+          >
+            <div style={{ fontSize: 12, color: "#6B6355", marginBottom: 10, textAlign: "center" }}>
+              直近{CALENDAR_WEEKS}週間の学習記録
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateRows: "repeat(7, 12px)",
+                gridAutoFlow: "column",
+                gap: 3,
+                justifyContent: "center",
+              }}
+            >
+              {calendarDays.map((day) => (
+                <div
+                  key={day.date}
+                  title={day.date}
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 3,
+                    background: day.studied ? d.accent : "#E4DFD3",
+                  }}
+                />
+              ))}
+            </div>
           </div>
         )}
 
@@ -1409,4 +1513,89 @@ function smallLinkButtonStyle(color, prominent = false) {
     padding: prominent ? "6px 12px" : "2px 4px",
     borderRadius: prominent ? 8 : 4,
   };
+}
+
+async function generateShareImage({ domainLabel, accent, accentSoft, streak, weeklyMastered, totalMastered, totalCards, calendarDays }) {
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready.catch(() => {});
+  }
+
+  const W = 640;
+  const H = 700;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  const cx = W / 2;
+  const pad = 36;
+
+  const roundedRect = (x, y, w, h, r) => {
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+    else ctx.rect(x, y, w, h);
+  };
+
+  ctx.fillStyle = "#EFEAE1";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "#FFFFFF";
+  roundedRect(pad, pad, W - pad * 2, H - pad * 2, 28);
+  ctx.fill();
+
+  ctx.textAlign = "center";
+  let y = pad + 60;
+
+  ctx.fillStyle = "#8A8072";
+  ctx.font = 'italic 600 18px "IBM Plex Serif", serif';
+  ctx.fillText("積み上げ復習", cx, y);
+  y += 44;
+
+  ctx.fillStyle = "#2B2620";
+  ctx.font = '700 32px "IBM Plex Serif", serif';
+  ctx.fillText(`${domainLabel}の記録`, cx, y);
+  y += 100;
+
+  ctx.fillStyle = accent;
+  ctx.font = '700 96px "IBM Plex Serif", serif';
+  ctx.fillText(`🔥 ${streak}`, cx, y);
+  y += 36;
+  ctx.fillStyle = "#6B6355";
+  ctx.font = '600 20px "IBM Plex Sans", sans-serif';
+  ctx.fillText("連続学習日数", cx, y);
+  y += 60;
+
+  ctx.fillStyle = accentSoft;
+  roundedRect(pad + 24, y - 36, W - (pad + 24) * 2, 88, 16);
+  ctx.fill();
+  ctx.fillStyle = accent;
+  ctx.font = '700 24px "IBM Plex Sans", sans-serif';
+  ctx.fillText(`定着 ${totalMastered} / ${totalCards} 枚`, cx, y + 4);
+  ctx.fillStyle = "#6B6355";
+  ctx.font = '500 15px "IBM Plex Sans", sans-serif';
+  ctx.fillText(`今週 +${weeklyMastered}枚`, cx, y + 30);
+  y += 100;
+
+  ctx.fillStyle = "#6B6355";
+  ctx.font = '600 14px "IBM Plex Sans", sans-serif';
+  ctx.fillText("直近12週間の学習記録", cx, y);
+  y += 22;
+
+  const cell = 13;
+  const gap = 4;
+  const gridW = CALENDAR_WEEKS * (cell + gap) - gap;
+  const startX = cx - gridW / 2;
+  calendarDays.forEach((day, i) => {
+    const col = Math.floor(i / 7);
+    const row = i % 7;
+    ctx.fillStyle = day.studied ? accent : "#E4DFD3";
+    roundedRect(startX + col * (cell + gap), y + row * (cell + gap), cell, cell, 3);
+    ctx.fill();
+  });
+  y += 7 * (cell + gap) + 36;
+
+  ctx.fillStyle = "#9A9184";
+  ctx.font = '500 14px "IBM Plex Sans", sans-serif';
+  ctx.fillText(todayStr(), cx, H - pad - 30);
+
+  return canvas;
 }
