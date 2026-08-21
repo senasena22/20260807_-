@@ -75,12 +75,28 @@ function dueLabel(dueAt) {
   return `${m}/${d}`;
 }
 
+function formatDate(iso) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+// timestamp used for cards that predate the "registered at" feature, so real new cards always sort above them
+const LEGACY_CREATED_AT = "2000-01-01T00:00:00.000Z";
+
+function findDuplicateCard(deck, domain, field, value, excludeId) {
+  const target = value.trim();
+  return Object.values(deck).find(
+    (c) => c.domain === domain && c.id !== excludeId && (c[field] || "").trim() === target
+  );
+}
+
 // box: 0 = new/due now, 1〜5 = how many successful reviews in a row. dueAt: "YYYY-MM-DD", the next date this card should resurface.
 function initDeck() {
   const cards = {};
   const today = todayStr();
   [...KOREAN_CARDS.map((c) => ({ ...c, domain: "korean" })), ...WINE_CARDS.map((c) => ({ ...c, domain: "wine" }))].forEach(
-    (c) => (cards[c.id] = { ...c, box: 0, interval: 0, dueAt: today, seen: 0, correct: 0 })
+    (c) => (cards[c.id] = { ...c, box: 0, interval: 0, dueAt: today, seen: 0, correct: 0, createdAt: LEGACY_CREATED_AT })
   );
   return cards;
 }
@@ -92,11 +108,14 @@ function loadDeck() {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return initDeck();
     const today = todayStr();
-    // migrate cards saved before due-date scheduling existed
+    // migrate cards saved before due-date scheduling / created-at tracking existed
     Object.values(parsed).forEach((c) => {
       if (!c.dueAt) {
         c.interval = 0;
         c.dueAt = today;
+      }
+      if (!c.createdAt) {
+        c.createdAt = LEGACY_CREATED_AT;
       }
     });
     return parsed;
@@ -212,7 +231,10 @@ export default function StudyApp() {
   const addCard = (card) => {
     const id = newCardId();
     const today = todayStr();
-    setDeck((prev) => ({ ...prev, [id]: { ...card, id, domain, box: 0, interval: 0, dueAt: today, seen: 0, correct: 0 } }));
+    setDeck((prev) => ({
+      ...prev,
+      [id]: { ...card, id, domain, box: 0, interval: 0, dueAt: today, seen: 0, correct: 0, createdAt: new Date().toISOString() },
+    }));
     setSessionQueue((q) => [...q, id]);
     setQueueIdx(0);
     setSessionDone(false);
@@ -223,6 +245,10 @@ export default function StudyApp() {
       const { ko, romanized, meaning, rule, source } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須だよ。");
+        return;
+      }
+      if (findDuplicateCard(deck, "korean", "ko", ko)) {
+        setFormError("その韓国語はもう登録されてるよ。");
         return;
       }
       addCard({
@@ -237,6 +263,10 @@ export default function StudyApp() {
       const { q, a, region, topic, hypothesis, source } = wineForm;
       if (!q.trim() || !a.trim()) {
         setFormError("質問と解答は必須だよ。");
+        return;
+      }
+      if (findDuplicateCard(deck, "wine", "q", q)) {
+        setFormError("同じ質問がもう登録されてるよ。");
         return;
       }
       addCard({
@@ -285,6 +315,10 @@ export default function StudyApp() {
         setFormError("韓国語と意味は必須だよ。");
         return;
       }
+      if (findDuplicateCard(deck, "korean", "ko", ko, editingCardId)) {
+        setFormError("その韓国語はもう登録されてるよ。");
+        return;
+      }
       setDeck((prev) => ({
         ...prev,
         [editingCardId]: {
@@ -301,6 +335,10 @@ export default function StudyApp() {
       const { q, a, region, topic, hypothesis, source } = wineForm;
       if (!q.trim() || !a.trim()) {
         setFormError("質問と解答は必須だよ。");
+        return;
+      }
+      if (findDuplicateCard(deck, "wine", "q", q, editingCardId)) {
+        setFormError("同じ質問がもう登録されてるよ。");
         return;
       }
       setDeck((prev) => ({
@@ -355,6 +393,12 @@ export default function StudyApp() {
         .filter((c) => c.domain === domain)
         .sort((a, b) => (a.dueAt || "").localeCompare(b.dueAt || "") || a.box - b.box),
     [deck, domain]
+  );
+
+  // list view: newest registered first
+  const listCards = useMemo(
+    () => [...domainCards].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")),
+    [domainCards]
   );
 
   const current = testMode ? deck[testQueue[testIdx]] : deck[sessionQueue[queueIdx]];
@@ -861,7 +905,7 @@ export default function StudyApp() {
                 <div style={{ fontSize: 13, color: "#9A9184", padding: "12px 0" }}>まだカードがないよ。</div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
-                  {domainCards.map((c) => (
+                  {listCards.map((c) => (
                     <div
                       key={c.id}
                       style={{
@@ -887,6 +931,9 @@ export default function StudyApp() {
                         )}
                         <div style={{ fontSize: 11, color: d.accent, marginTop: 4 }}>
                           Box {c.box}・{c.correct}/{c.seen} 正解・次回 {dueLabel(c.dueAt)}
+                        </div>
+                        <div style={{ fontSize: 10, color: "#B4AC9C", marginTop: 2 }}>
+                          登録: {formatDate(c.createdAt)}
                         </div>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
