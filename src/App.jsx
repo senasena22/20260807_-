@@ -1146,51 +1146,8 @@ export default function StudyApp() {
               )}
             </div>
 
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 10 }}>学習の続きから</div>
-            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 18, border: "1px solid #E5E2DC", marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 10,
-                    background: d.accentSoft,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: d.accent,
-                    flexShrink: 0,
-                  }}
-                >
-                  <DIcon size={22} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{d.label}</div>
-                  <div style={{ fontSize: 12, color: "#747872" }}>
-                    定着 {deckMasteredCards(domain)}/{deckTotalCards(domain)}枚
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setPage("review")}
-                style={{
-                  width: "100%",
-                  padding: "12px 0",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "#E8A93C",
-                  color: "#1a1c1b",
-                  fontWeight: 700,
-                  fontSize: 14,
-                  cursor: "pointer",
-                }}
-              >
-                学習を続ける
-              </button>
-            </div>
-
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842" }}>マイデッキ</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842" }}>学習の続きから</div>
               <button
                 onClick={() => setPage("library")}
                 style={{ border: "none", background: "transparent", color: d.accent, fontWeight: 600, fontSize: 12, cursor: "pointer" }}
@@ -1198,48 +1155,55 @@ export default function StudyApp() {
                 すべて見る
               </button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 12 }}>
               {decks.map((val) => {
                 const TIcon = DECK_ICONS[val.iconKey] || BookOpen;
                 const total = deckTotalCards(val.key);
                 const mastered = deckMasteredCards(val.key);
-                const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
                 return (
                   <div
                     key={val.key}
-                    onClick={() => openDeckReview(val.key)}
-                    style={{
-                      background: "#FFFFFF",
-                      border: "1px solid #E5E2DC",
-                      borderRadius: 16,
-                      padding: 14,
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                    }}
+                    style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #E5E2DC" }}
                   >
-                    <div
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                      <div
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 10,
+                          background: val.accentSoft,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: val.accent,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <TIcon size={20} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{val.label}</div>
+                        <div style={{ fontSize: 12, color: "#747872" }}>
+                          定着 {mastered}/{total}枚
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => openDeckReview(val.key)}
                       style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 10,
-                        background: val.accentSoft,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: val.accent,
+                        width: "100%",
+                        padding: "10px 0",
+                        borderRadius: 8,
+                        border: "none",
+                        background: "#E8A93C",
+                        color: "#1a1c1b",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: "pointer",
                       }}
                     >
-                      <TIcon size={20} />
-                    </div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{val.label}</div>
-                    <div style={{ height: 6, background: "#e9e2d4", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${pct}%`, background: val.accent }} />
-                    </div>
-                    <div style={{ fontSize: 11, color: "#747872" }}>
-                      {total > 0 ? `${mastered}/${total} 定着・${pct}%` : "カードなし"}
-                    </div>
+                      学習を続ける
+                    </button>
                   </div>
                 );
               })}
@@ -1253,17 +1217,15 @@ export default function StudyApp() {
                   borderRadius: 16,
                   background: "transparent",
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 6,
-                  padding: 20,
+                  padding: 16,
                   cursor: "pointer",
                   color: "#434842",
-                  minHeight: 120,
                 }}
               >
-                <Plus size={20} />
+                <Plus size={18} />
                 <span style={{ fontSize: 13, fontWeight: 600 }}>新しいデッキ</span>
               </div>
             </div>
