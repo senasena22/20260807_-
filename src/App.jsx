@@ -967,9 +967,9 @@ export default function StudyApp() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#EFEAE1",
-        fontFamily: "'IBM Plex Sans', 'IBM Plex Sans KR', sans-serif",
-        color: "#2B2620",
+        background: "#faf9f7",
+        fontFamily: "'Nunito Sans', 'IBM Plex Sans KR', sans-serif",
+        color: "#1a1c1b",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -978,7 +978,7 @@ export default function StudyApp() {
     >
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap"
       />
 
       <div style={{ width: "100%", maxWidth: 440 }}>
@@ -986,12 +986,12 @@ export default function StudyApp() {
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div
             style={{
-              fontFamily: "'IBM Plex Serif', serif",
-              fontStyle: "italic",
+              fontFamily: "'Nunito Sans', sans-serif",
               fontSize: 13,
-              letterSpacing: "0.12em",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
               textTransform: "uppercase",
-              color: "#8A8072",
+              color: "#4e604f",
               marginBottom: 4,
             }}
           >
@@ -999,10 +999,11 @@ export default function StudyApp() {
           </div>
           <h1
             style={{
-              fontFamily: "'IBM Plex Serif', serif",
-              fontWeight: 600,
+              fontFamily: "'Nunito Sans', sans-serif",
+              fontWeight: 700,
               fontSize: 26,
               margin: 0,
+              color: "#1a1c1b",
             }}
           >
             Sena's Study Deck
