@@ -52,6 +52,7 @@ const EXAM_DATES_STORAGE_KEY = "study-srs.examDates.v1";
 const MATERIALS_STORAGE_KEY = "study-srs.materials.v1";
 const POINTS_STORAGE_KEY = "study-srs.points.v1";
 const COMPLETED_MATERIALS_STORAGE_KEY = "study-srs.completedMaterials.v1";
+const BACKUP_STORAGE_KEY = "study-srs.backupMeta.v1";
 
 const ALL_STORAGE_KEYS = [
   DECK_STORAGE_KEY,
@@ -62,6 +63,7 @@ const ALL_STORAGE_KEYS = [
   MATERIALS_STORAGE_KEY,
   POINTS_STORAGE_KEY,
   COMPLETED_MATERIALS_STORAGE_KEY,
+  BACKUP_STORAGE_KEY,
 ];
 
 // days until next review after each successful box level (box 1〜5)
@@ -148,6 +150,17 @@ function loadPoints() {
     };
   } catch {
     return { total: 0, lastOpenBonusDate: null };
+  }
+}
+
+function loadBackupMeta() {
+  try {
+    const raw = localStorage.getItem(BACKUP_STORAGE_KEY);
+    if (!raw) return { lastExportedAt: null };
+    const parsed = JSON.parse(raw);
+    return { lastExportedAt: parsed.lastExportedAt || null };
+  } catch {
+    return { lastExportedAt: null };
   }
 }
 
@@ -312,6 +325,7 @@ export default function StudyApp() {
   const [showDeckForm, setShowDeckForm] = useState(false);
   const [deckForm, setDeckForm] = useState({ name: "", iconKey: "book", colorIdx: 0 });
   const [points, setPoints] = useState(loadPoints);
+  const [backupMeta, setBackupMeta] = useState(loadBackupMeta);
 
   const [stats, setStats] = useState(loadStats);
   const [testMode, setTestMode] = useState(false);
@@ -368,6 +382,10 @@ export default function StudyApp() {
   useEffect(() => {
     localStorage.setItem(POINTS_STORAGE_KEY, JSON.stringify(points));
   }, [points]);
+
+  useEffect(() => {
+    localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify(backupMeta));
+  }, [backupMeta]);
 
   useEffect(() => {
     const today = todayStr();
@@ -847,6 +865,8 @@ export default function StudyApp() {
     .sort()[0];
 
   const streak = computeStreak(stats.studyDates);
+  const daysSinceLastBackup = backupMeta.lastExportedAt ? Math.abs(daysUntil(backupMeta.lastExportedAt)) : null;
+  const backupDue = daysSinceLastBackup === null || daysSinceLastBackup >= 7;
   const calendarDays = useMemo(() => buildCalendarDays(stats.studyDates), [stats.studyDates]);
   const calendarMonthCells = useMemo(() => {
     const { year, month } = calendarMonth;
@@ -929,6 +949,8 @@ export default function StudyApp() {
   const fileInputRef = useRef(null);
 
   const handleExportBackup = () => {
+    const newMeta = { lastExportedAt: todayStr() };
+    localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify(newMeta));
     const data = {};
     ALL_STORAGE_KEYS.forEach((key) => {
       const value = localStorage.getItem(key);
@@ -942,6 +964,7 @@ export default function StudyApp() {
     a.download = `ippo-backup-${todayStr()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    setBackupMeta(newMeta);
   };
 
   const handleImportClick = () => {
@@ -1212,6 +1235,45 @@ export default function StudyApp() {
             <div style={{ fontSize: 13, color: "#434842", marginBottom: 16, lineHeight: 1.6 }}>
               今日も一歩ずつ進んでいきましょう。あなたのペースで大丈夫だよ。
             </div>
+
+            {backupDue && (
+              <div
+                style={{
+                  background: "#FFF8E8",
+                  border: "1px solid #E8A93C",
+                  borderRadius: 12,
+                  padding: "12px 14px",
+                  marginBottom: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                }}
+              >
+                <div style={{ fontSize: 12, color: "#434842", lineHeight: 1.5 }}>
+                  💾{" "}
+                  {backupMeta.lastExportedAt
+                    ? `最後のバックアップから${daysSinceLastBackup}日経ったよ`
+                    : "まだバックアップを取ってないよ"}
+                </div>
+                <button
+                  onClick={handleExportBackup}
+                  style={{
+                    flexShrink: 0,
+                    border: "none",
+                    background: "#E8A93C",
+                    color: "#1a1c1b",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                  }}
+                >
+                  書き出す
+                </button>
+              </div>
+            )}
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
               <div style={{ background: "#FFFFFF", borderRadius: 14, padding: 12, border: "1px solid #E5E2DC", textAlign: "center" }}>
