@@ -897,33 +897,33 @@ export default function StudyApp() {
             >
               <Volume2 size={15} /> 音声を聞く
             </button>
-            <div style={{ marginTop: 16, fontSize: 12, color: "#9A9184" }}>タップして意味を確認</div>
+            <div style={{ marginTop: 16, fontSize: 12, color: "#747872" }}>タップして意味を確認</div>
           </div>
         ) : schema === "wine" ? (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, lineHeight: 1.5, marginBottom: 8 }}>
               {current.q}
             </div>
-            <div style={{ fontSize: 12, color: "#9A9184", marginTop: 16 }}>タップして解答を確認</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 16 }}>タップして解答を確認</div>
           </div>
         ) : (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 22, fontWeight: 600, lineHeight: 1.5 }}>
               {current.front}
             </div>
-            <div style={{ fontSize: 12, color: "#9A9184", marginTop: 16 }}>タップして裏面を確認</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 16 }}>タップして裏面を確認</div>
           </div>
         )
       ) : schema === "korean" ? (
         <div>
-          <div style={{ fontSize: 13, color: "#9A9184", marginBottom: 4 }}>{current.romanized}</div>
+          <div style={{ fontSize: 13, color: "#747872", marginBottom: 4 }}>{current.romanized}</div>
           <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 24, fontWeight: 600, marginBottom: 14 }}>
             {current.meaning}
           </div>
           <div
             style={{
               background: d.accentSoft,
-              borderRadius: 10,
+              borderRadius: 8,
               padding: "12px 14px",
               fontSize: 13,
               lineHeight: 1.6,
@@ -934,7 +934,7 @@ export default function StudyApp() {
             {current.rule}
           </div>
           {current.source && (
-            <div style={{ fontSize: 11, color: "#9A9184", marginTop: 10 }}>📎 {current.source}</div>
+            <div style={{ fontSize: 11, color: "#747872", marginTop: 10 }}>📎 {current.source}</div>
           )}
         </div>
       ) : schema === "wine" ? (
@@ -944,10 +944,10 @@ export default function StudyApp() {
             {current.a}
           </div>
           {current.hypothesis && (
-            <div style={{ fontSize: 12, color: "#9A9184", marginTop: 10 }}>💭 最初の仮説: {current.hypothesis}</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 10 }}>💭 最初の仮説: {current.hypothesis}</div>
           )}
           {current.source && (
-            <div style={{ fontSize: 11, color: "#9A9184", marginTop: 6 }}>📎 {current.source}</div>
+            <div style={{ fontSize: 11, color: "#747872", marginTop: 6 }}>📎 {current.source}</div>
           )}
         </div>
       ) : (
@@ -956,7 +956,7 @@ export default function StudyApp() {
             {current.back}
           </div>
           {current.source && (
-            <div style={{ fontSize: 11, color: "#9A9184", marginTop: 6 }}>📎 {current.source}</div>
+            <div style={{ fontSize: 11, color: "#747872", marginTop: 6 }}>📎 {current.source}</div>
           )}
         </div>
       )}
@@ -1017,10 +1017,10 @@ export default function StudyApp() {
               padding: "6px 14px",
               borderRadius: 999,
               background: "#FFFFFF",
-              border: "1px solid #E4DFD3",
+              border: "1px solid #E5E2DC",
               fontSize: 13,
               fontWeight: 600,
-              color: "#6B6355",
+              color: "#434842",
             }}
           >
             ✦ {points.total.toLocaleString()} pt
@@ -1043,10 +1043,10 @@ export default function StudyApp() {
                   justifyContent: "center",
                   gap: 8,
                   padding: "12px 16px",
-                  borderRadius: 10,
+                  borderRadius: 8,
                   border: active ? `2px solid ${val.accent}` : "2px solid transparent",
-                  background: active ? val.accentSoft : "#E4DFD3",
-                  color: active ? val.accent : "#6B6355",
+                  background: active ? val.accentSoft : "#e9e2d4",
+                  color: active ? val.accent : "#434842",
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: "pointer",
@@ -1068,10 +1068,10 @@ export default function StudyApp() {
               justifyContent: "center",
               gap: 6,
               padding: "12px 14px",
-              borderRadius: 10,
-              border: "1.5px dashed #9A9184",
+              borderRadius: 8,
+              border: "1.5px dashed #747872",
               background: "transparent",
-              color: "#6B6355",
+              color: "#434842",
               fontWeight: 600,
               fontSize: 14,
               cursor: "pointer",
@@ -1084,15 +1084,15 @@ export default function StudyApp() {
         </div>
 
         {showDeckForm && (
-          <div style={{ background: "#FFFFFF", borderRadius: 12, padding: 16, marginBottom: 20, border: "1px solid #E4DFD3" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6355", marginBottom: 10 }}>新しいデッキを作る</div>
+          <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, marginBottom: 20, border: "1px solid #E5E2DC" }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#434842", marginBottom: 10 }}>新しいデッキを作る</div>
             <input
               value={deckForm.name}
               onChange={(e) => setDeckForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="デッキ名（例: 英語）"
               style={{ ...inputStyle, marginBottom: 10 }}
             />
-            <div style={{ fontSize: 12, color: "#9A9184", marginBottom: 6 }}>アイコン</div>
+            <div style={{ fontSize: 12, color: "#747872", marginBottom: 6 }}>アイコン</div>
             <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
               {Object.entries(DECK_ICONS).map(([key, IconComp]) => (
                 <button
@@ -1103,7 +1103,7 @@ export default function StudyApp() {
                     width: 36,
                     height: 36,
                     borderRadius: 8,
-                    border: deckForm.iconKey === key ? "2px solid #6B6355" : "1px solid #E4DFD3",
+                    border: deckForm.iconKey === key ? "2px solid #434842" : "1px solid #E5E2DC",
                     background: "#F7F4EE",
                     color: "#4A4438",
                     display: "flex",
@@ -1116,7 +1116,7 @@ export default function StudyApp() {
                 </button>
               ))}
             </div>
-            <div style={{ fontSize: 12, color: "#9A9184", marginBottom: 6 }}>カラー</div>
+            <div style={{ fontSize: 12, color: "#747872", marginBottom: 6 }}>カラー</div>
             <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
               {ACCENT_PRESETS.map((c, i) => (
                 <button
@@ -1127,7 +1127,7 @@ export default function StudyApp() {
                     width: 32,
                     height: 32,
                     borderRadius: "50%",
-                    border: deckForm.colorIdx === i ? "2px solid #2B2620" : "1px solid #E4DFD3",
+                    border: deckForm.colorIdx === i ? "2px solid #2B2620" : "1px solid #E5E2DC",
                     background: c.accent,
                     cursor: "pointer",
                   }}
@@ -1141,9 +1141,9 @@ export default function StudyApp() {
                   flex: 1,
                   padding: "10px 0",
                   borderRadius: 8,
-                  border: "1px solid #E4DFD3",
+                  border: "1px solid #E5E2DC",
                   background: "transparent",
-                  color: "#6B6355",
+                  color: "#434842",
                   fontWeight: 600,
                   fontSize: 13,
                   cursor: "pointer",
@@ -1169,8 +1169,8 @@ export default function StudyApp() {
               </button>
             </div>
             {decks.some((x) => !x.builtin) && (
-              <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #E4DFD3" }}>
-                <div style={{ fontSize: 12, color: "#9A9184", marginBottom: 6 }}>作ったデッキを削除</div>
+              <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #E5E2DC" }}>
+                <div style={{ fontSize: 12, color: "#747872", marginBottom: 6 }}>作ったデッキを削除</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {decks
                     .filter((x) => !x.builtin)
@@ -1203,10 +1203,10 @@ export default function StudyApp() {
               justifyContent: "center",
               gap: 8,
               padding: "10px 10px",
-              borderRadius: 10,
+              borderRadius: 8,
               border: page === "review" ? `2px solid ${d.accent}` : "2px solid transparent",
-              background: page === "review" ? d.accentSoft : "#E4DFD3",
-              color: page === "review" ? d.accent : "#6B6355",
+              background: page === "review" ? d.accentSoft : "#e9e2d4",
+              color: page === "review" ? d.accent : "#434842",
               fontWeight: 600,
               fontSize: 13,
               cursor: "pointer",
@@ -1227,10 +1227,10 @@ export default function StudyApp() {
               justifyContent: "center",
               gap: 8,
               padding: "10px 10px",
-              borderRadius: 10,
+              borderRadius: 8,
               border: page === "plan" ? `2px solid ${d.accent}` : "2px solid transparent",
-              background: page === "plan" ? d.accentSoft : "#E4DFD3",
-              color: page === "plan" ? d.accent : "#6B6355",
+              background: page === "plan" ? d.accentSoft : "#e9e2d4",
+              color: page === "plan" ? d.accent : "#434842",
               fontWeight: 600,
               fontSize: 13,
               cursor: "pointer",
@@ -1259,7 +1259,7 @@ export default function StudyApp() {
                     削除
                   </button>
                 )}
-                <button onClick={() => setEditingExamDate(false)} style={smallLinkButtonStyle("#9A9184")}>
+                <button onClick={() => setEditingExamDate(false)} style={smallLinkButtonStyle("#747872")}>
                   閉じる
                 </button>
               </div>
@@ -1268,7 +1268,7 @@ export default function StudyApp() {
                 {daysUntil(examDates[domain]) >= 0
                   ? `🎯 試験まであと${daysUntil(examDates[domain])}日（${examDates[domain]}）`
                   : "🎯 試験日を過ぎてるよ"}{" "}
-                <button onClick={openExamDateEditor} style={smallLinkButtonStyle("#9A9184")}>
+                <button onClick={openExamDateEditor} style={smallLinkButtonStyle("#747872")}>
                   変更
                 </button>
               </div>
@@ -1285,13 +1285,13 @@ export default function StudyApp() {
           <div
             style={{
               background: "#FFFFFF",
-              borderRadius: 12,
+              borderRadius: 16,
               padding: 16,
               marginBottom: 14,
               border: `1px solid ${d.accentSoft}`,
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6355", marginBottom: 10 }}>📖 教材の進み具合</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#434842", marginBottom: 10 }}>📖 教材の進み具合</div>
             {editingMaterial ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input
@@ -1331,9 +1331,9 @@ export default function StudyApp() {
                       flex: 1,
                       padding: "10px 0",
                       borderRadius: 8,
-                      border: "1px solid #E4DFD3",
+                      border: "1px solid #E5E2DC",
                       background: "transparent",
-                      color: "#6B6355",
+                      color: "#434842",
                       fontWeight: 600,
                       fontSize: 13,
                       cursor: "pointer",
@@ -1367,10 +1367,10 @@ export default function StudyApp() {
             ) : material ? (
               <div>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{material.name}</div>
-                <div style={{ fontSize: 12, color: "#6B6355", marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: "#434842", marginTop: 4 }}>
                   {material.currentUnit} / {material.totalUnits}（残り{materialRemaining}）
                 </div>
-                <div style={{ height: 8, background: "#E4DFD3", borderRadius: 4, marginTop: 8, overflow: "hidden" }}>
+                <div style={{ height: 8, background: "#e9e2d4", borderRadius: 4, marginTop: 8, overflow: "hidden" }}>
                   <div
                     style={{
                       height: "100%",
@@ -1380,7 +1380,7 @@ export default function StudyApp() {
                   />
                 </div>
                 {materialRemaining > 0 ? (
-                  <div style={{ fontSize: 12, color: "#6B6355", marginTop: 10 }}>
+                  <div style={{ fontSize: 12, color: "#434842", marginTop: 10 }}>
                     このペースだと <strong>{materialFinishDate}</strong> ごろ完了予定
                   </div>
                 ) : (
@@ -1409,8 +1409,8 @@ export default function StudyApp() {
                       padding: "8px 0",
                       borderRadius: 8,
                       border: "none",
-                      background: materialRemaining === 0 ? "#E4DFD3" : d.accentSoft,
-                      color: materialRemaining === 0 ? "#9A9184" : d.accent,
+                      background: materialRemaining === 0 ? "#e9e2d4" : d.accentSoft,
+                      color: materialRemaining === 0 ? "#747872" : d.accent,
                       fontWeight: 600,
                       fontSize: 13,
                       cursor: materialRemaining === 0 ? "default" : "pointer",
@@ -1424,9 +1424,9 @@ export default function StudyApp() {
                       flex: 1,
                       padding: "8px 0",
                       borderRadius: 8,
-                      border: "1px solid #E4DFD3",
+                      border: "1px solid #E5E2DC",
                       background: "transparent",
-                      color: "#6B6355",
+                      color: "#434842",
                       fontWeight: 600,
                       fontSize: 13,
                       cursor: "pointer",
@@ -1450,7 +1450,7 @@ export default function StudyApp() {
             style={{
               textAlign: "center",
               fontSize: 11,
-              color: "#9A9184",
+              color: "#747872",
               marginBottom: 14,
               lineHeight: 1.7,
             }}
@@ -1483,13 +1483,13 @@ export default function StudyApp() {
           <div
             style={{
               background: "#FFFFFF",
-              borderRadius: 12,
+              borderRadius: 16,
               padding: 16,
               marginBottom: 14,
               border: `1px solid ${d.accentSoft}`,
             }}
           >
-            <div style={{ fontSize: 12, color: "#6B6355", marginBottom: 10, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: "#434842", marginBottom: 10, textAlign: "center" }}>
               直近{CALENDAR_WEEKS}週間の学習記録
             </div>
             <div
@@ -1509,7 +1509,7 @@ export default function StudyApp() {
                     width: 12,
                     height: 12,
                     borderRadius: 3,
-                    background: day.studied ? d.accent : "#E4DFD3",
+                    background: day.studied ? d.accent : "#e9e2d4",
                   }}
                 />
               ))}
@@ -1536,7 +1536,7 @@ export default function StudyApp() {
                   justifyContent: "center",
                   gap: 8,
                   padding: "12px 0",
-                  borderRadius: 10,
+                  borderRadius: 8,
                   border: `1.5px dashed ${d.accent}`,
                   background: "transparent",
                   color: d.accent,
@@ -1561,10 +1561,10 @@ export default function StudyApp() {
                   justifyContent: "center",
                   gap: 6,
                   padding: "12px 0",
-                  borderRadius: 10,
-                  border: "1.5px solid #E4DFD3",
+                  borderRadius: 8,
+                  border: "1.5px solid #E5E2DC",
                   background: "transparent",
-                  color: "#6B6355",
+                  color: "#434842",
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: "pointer",
@@ -1583,10 +1583,10 @@ export default function StudyApp() {
                   justifyContent: "center",
                   gap: 6,
                   padding: "12px 0",
-                  borderRadius: 10,
-                  border: "1.5px solid #E4DFD3",
+                  borderRadius: 8,
+                  border: "1.5px solid #E5E2DC",
                   background: "transparent",
-                  color: totalCards === 0 ? "#C9C2B4" : "#6B6355",
+                  color: totalCards === 0 ? "#C9C2B4" : "#434842",
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: totalCards === 0 ? "default" : "pointer",
@@ -1600,13 +1600,13 @@ export default function StudyApp() {
             <div
               style={{
                 background: "#FFFFFF",
-                borderRadius: 12,
+                borderRadius: 16,
                 padding: 16,
                 border: `1px solid ${d.accentSoft}`,
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6355" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#434842" }}>
                   {d.label}のカード一覧（{domainCards.length}枚）
                 </div>
                 <button
@@ -1614,7 +1614,7 @@ export default function StudyApp() {
                   style={{
                     border: "none",
                     background: "transparent",
-                    color: "#6B6355",
+                    color: "#434842",
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1625,7 +1625,7 @@ export default function StudyApp() {
                 </button>
               </div>
               {domainCards.length === 0 ? (
-                <div style={{ fontSize: 13, color: "#9A9184", padding: "12px 0" }}>まだカードがないよ。</div>
+                <div style={{ fontSize: 13, color: "#747872", padding: "12px 0" }}>まだカードがないよ。</div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
                   {listCards.map((c) => (
@@ -1645,14 +1645,14 @@ export default function StudyApp() {
                         <div style={{ fontWeight: 600, fontSize: 14 }}>
                           {schema === "korean" ? c.ko : schema === "wine" ? c.q : c.front}
                         </div>
-                        <div style={{ fontSize: 12, color: "#9A9184", marginTop: 2 }}>
+                        <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>
                           {schema === "korean" ? c.meaning : schema === "wine" ? c.a : c.back}
                         </div>
                         {schema === "wine" && c.hypothesis && (
-                          <div style={{ fontSize: 11, color: "#9A9184", marginTop: 2 }}>💭 仮説: {c.hypothesis}</div>
+                          <div style={{ fontSize: 11, color: "#747872", marginTop: 2 }}>💭 仮説: {c.hypothesis}</div>
                         )}
                         {c.source && (
-                          <div style={{ fontSize: 11, color: "#9A9184", marginTop: 2 }}>📎 {c.source}</div>
+                          <div style={{ fontSize: 11, color: "#747872", marginTop: 2 }}>📎 {c.source}</div>
                         )}
                         <div style={{ fontSize: 11, color: d.accent, marginTop: 4 }}>
                           Box {c.box}・{c.correct}/{c.seen} 正解・次回 {dueLabel(c.dueAt)}
@@ -1699,7 +1699,7 @@ export default function StudyApp() {
             <div
               style={{
                 background: "#FFFFFF",
-                borderRadius: 12,
+                borderRadius: 16,
                 padding: 16,
                 border: `1px solid ${d.accentSoft}`,
               }}
@@ -1824,9 +1824,9 @@ export default function StudyApp() {
                     flex: 1,
                     padding: "10px 0",
                     borderRadius: 8,
-                    border: "1px solid #E4DFD3",
+                    border: "1px solid #E5E2DC",
                     background: "transparent",
-                    color: "#6B6355",
+                    color: "#434842",
                     fontWeight: 600,
                     fontSize: 13,
                     cursor: "pointer",
@@ -1877,7 +1877,7 @@ export default function StudyApp() {
               alignItems: "center",
               marginBottom: 14,
               fontSize: 13,
-              color: "#6B6355",
+              color: "#434842",
             }}
           >
             <span>
@@ -1899,7 +1899,7 @@ export default function StudyApp() {
               alignItems: "center",
               marginBottom: 14,
               fontSize: 13,
-              color: "#6B6355",
+              color: "#434842",
             }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -1908,7 +1908,7 @@ export default function StudyApp() {
             </span>
             <button
               onClick={cancelTest}
-              style={{ border: "none", background: "transparent", color: "#9A9184", fontSize: 12, cursor: "pointer" }}
+              style={{ border: "none", background: "transparent", color: "#747872", fontSize: 12, cursor: "pointer" }}
             >
               やめる
             </button>
@@ -1937,7 +1937,7 @@ export default function StudyApp() {
               <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 36, fontWeight: 700, color: d.accent }}>
                 {testScore} / {testQueue.length}
               </div>
-              <div style={{ fontSize: 13, color: "#6B6355" }}>
+              <div style={{ fontSize: 13, color: "#434842" }}>
                 正答率 {Math.round((testScore / testQueue.length) * 100)}%
               </div>
               <button
@@ -1981,7 +1981,7 @@ export default function StudyApp() {
             <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 18, fontWeight: 600 }}>
               カードがまだないよ
             </div>
-            <div style={{ fontSize: 13, color: "#6B6355" }}>「＋追加」から{d.label}のカードを登録してみて。</div>
+            <div style={{ fontSize: 13, color: "#434842" }}>「＋追加」から{d.label}のカードを登録してみて。</div>
           </div>
         ) : sessionTotal === 0 ? (
           <div
@@ -2002,7 +2002,7 @@ export default function StudyApp() {
             <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, fontWeight: 600 }}>
               今日の復習は終わったよ
             </div>
-            <div style={{ fontSize: 13, color: "#6B6355" }}>
+            <div style={{ fontSize: 13, color: "#434842" }}>
               {nextDueDate ? `次回は ${dueLabel(nextDueDate)} に出てくるよ` : "また明日確認してね"}
             </div>
             <button
@@ -2045,7 +2045,7 @@ export default function StudyApp() {
             <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, fontWeight: 600 }}>
               {d.label}セット終了
             </div>
-            <div style={{ fontSize: 13, color: "#6B6355" }}>
+            <div style={{ fontSize: 13, color: "#434842" }}>
               定着 {totalMastered} / {totalCards} 枚（Box3以上）
             </div>
             <button
@@ -2081,7 +2081,7 @@ export default function StudyApp() {
                 justifyContent: "center",
                 gap: 6,
                 padding: "14px 0",
-                borderRadius: 12,
+                borderRadius: 8,
                 border: "1.5px solid #C97B6E",
                 background: "#FBEEEC",
                 color: "#B0483A",
@@ -2101,7 +2101,7 @@ export default function StudyApp() {
                 justifyContent: "center",
                 gap: 6,
                 padding: "14px 0",
-                borderRadius: 12,
+                borderRadius: 8,
                 border: `1.5px solid ${d.accent}`,
                 background: d.accentSoft,
                 color: d.accent,
@@ -2116,7 +2116,7 @@ export default function StudyApp() {
         )}
 
         {/* Box legend */}
-        <div style={{ marginTop: 22, fontSize: 11, color: "#9A9184", textAlign: "center", lineHeight: 1.6 }}>
+        <div style={{ marginTop: 22, fontSize: 11, color: "#747872", textAlign: "center", lineHeight: 1.6 }}>
           {testMode ? (
             "テストの結果はBoxや復習日には影響しないよ（力試し用）。"
           ) : (
@@ -2139,7 +2139,7 @@ export default function StudyApp() {
 const inputStyle = {
   width: "100%",
   borderRadius: 8,
-  border: "1px solid #E4DFD3",
+  border: "1px solid #E5E2DC",
   padding: 10,
   fontSize: 14,
   fontFamily: "inherit",
@@ -2203,7 +2203,7 @@ async function generateShareImage({ domainLabel, accent, accentSoft, streak, wee
   ctx.font = '700 96px "IBM Plex Serif", serif';
   ctx.fillText(`🔥 ${streak}`, cx, y);
   y += 36;
-  ctx.fillStyle = "#6B6355";
+  ctx.fillStyle = "#434842";
   ctx.font = '600 20px "IBM Plex Sans", sans-serif';
   ctx.fillText("連続学習日数", cx, y);
   y += 60;
@@ -2214,12 +2214,12 @@ async function generateShareImage({ domainLabel, accent, accentSoft, streak, wee
   ctx.fillStyle = accent;
   ctx.font = '700 24px "IBM Plex Sans", sans-serif';
   ctx.fillText(`定着 ${totalMastered} / ${totalCards} 枚`, cx, y + 4);
-  ctx.fillStyle = "#6B6355";
+  ctx.fillStyle = "#434842";
   ctx.font = '500 15px "IBM Plex Sans", sans-serif';
   ctx.fillText(`今週 +${weeklyMastered}枚`, cx, y + 30);
   y += 100;
 
-  ctx.fillStyle = "#6B6355";
+  ctx.fillStyle = "#434842";
   ctx.font = '600 14px "IBM Plex Sans", sans-serif';
   ctx.fillText("直近12週間の学習記録", cx, y);
   y += 22;
@@ -2231,13 +2231,13 @@ async function generateShareImage({ domainLabel, accent, accentSoft, streak, wee
   calendarDays.forEach((day, i) => {
     const col = Math.floor(i / 7);
     const row = i % 7;
-    ctx.fillStyle = day.studied ? accent : "#E4DFD3";
+    ctx.fillStyle = day.studied ? accent : "#e9e2d4";
     roundedRect(startX + col * (cell + gap), y + row * (cell + gap), cell, cell, 3);
     ctx.fill();
   });
   y += 7 * (cell + gap) + 36;
 
-  ctx.fillStyle = "#9A9184";
+  ctx.fillStyle = "#747872";
   ctx.font = '500 14px "IBM Plex Sans", sans-serif';
   ctx.fillText(todayStr(), cx, H - pad - 30);
 
