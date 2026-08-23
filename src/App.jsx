@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -19,16 +19,38 @@ const WINE_CARDS = [
   { id: "w5", q: "バローロに使われる品種は?", a: "ネッビオーロ100%", region: "イタリア｜ピエモンテ", topic: "産地・品種" },
 ];
 
-const DOMAINS = {
-  korean: { label: "韓国語", accent: "#3A5A54", accentSoft: "#E4EBE8", icon: Languages },
-  wine: { label: "ワイン試験", accent: "#6B1F2E", accentSoft: "#F0E3E5", icon: Wine },
+const DECK_ICONS = {
+  languages: Languages,
+  wine: Wine,
+  book: BookOpen,
+  brain: Brain,
+  star: Star,
+  music: Music,
+  globe: Globe,
+  dumbbell: Dumbbell,
 };
 
+const ACCENT_PRESETS = [
+  { accent: "#34588F", accentSoft: "#E3EAF3" },
+  { accent: "#5B4B8A", accentSoft: "#ECE7F4" },
+  { accent: "#B0662E", accentSoft: "#F5E9DD" },
+  { accent: "#2E7A73", accentSoft: "#DFF0EE" },
+  { accent: "#A14F76", accentSoft: "#F3E3EC" },
+  { accent: "#4F5E66", accentSoft: "#E4E9EB" },
+];
+
+const BUILTIN_DECKS = [
+  { key: "korean", label: "韓国語", accent: "#3A5A54", accentSoft: "#E4EBE8", iconKey: "languages", schema: "korean", builtin: true },
+  { key: "wine", label: "ワイン試験", accent: "#6B1F2E", accentSoft: "#F0E3E5", iconKey: "wine", schema: "wine", builtin: true },
+];
+
 const DECK_STORAGE_KEY = "study-srs.deck.v1";
+const DECKS_STORAGE_KEY = "study-srs.decks.v1";
 const DOMAIN_STORAGE_KEY = "study-srs.domain.v1";
 const STATS_STORAGE_KEY = "study-srs.stats.v1";
 const EXAM_DATES_STORAGE_KEY = "study-srs.examDates.v1";
 const MATERIALS_STORAGE_KEY = "study-srs.materials.v1";
+const POINTS_STORAGE_KEY = "study-srs.points.v1";
 
 // days until next review after each successful box level (box 1〜5)
 const INTERVALS_DAYS = [1, 3, 7, 16, 30];
@@ -61,22 +83,48 @@ function daysUntil(dateStr) {
 function loadExamDates() {
   try {
     const raw = localStorage.getItem(EXAM_DATES_STORAGE_KEY);
-    if (!raw) return { korean: null, wine: null };
+    if (!raw) return {};
     const parsed = JSON.parse(raw);
-    return { korean: parsed.korean || null, wine: parsed.wine || null };
+    return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
-    return { korean: null, wine: null };
+    return {};
   }
 }
 
 function loadMaterials() {
   try {
     const raw = localStorage.getItem(MATERIALS_STORAGE_KEY);
-    if (!raw) return { korean: null, wine: null };
+    if (!raw) return {};
     const parsed = JSON.parse(raw);
-    return { korean: parsed.korean || null, wine: parsed.wine || null };
+    return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
-    return { korean: null, wine: null };
+    return {};
+  }
+}
+
+function loadDecks() {
+  try {
+    const raw = localStorage.getItem(DECKS_STORAGE_KEY);
+    if (!raw) return BUILTIN_DECKS;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return BUILTIN_DECKS;
+    return parsed;
+  } catch {
+    return BUILTIN_DECKS;
+  }
+}
+
+function loadPoints() {
+  try {
+    const raw = localStorage.getItem(POINTS_STORAGE_KEY);
+    if (!raw) return { total: 0, lastOpenBonusDate: null };
+    const parsed = JSON.parse(raw);
+    return {
+      total: Number.isFinite(parsed.total) ? parsed.total : 0,
+      lastOpenBonusDate: parsed.lastOpenBonusDate || null,
+    };
+  } catch {
+    return { total: 0, lastOpenBonusDate: null };
   }
 }
 
@@ -136,14 +184,20 @@ function loadDeck() {
   }
 }
 
-function loadDomain() {
+function loadDomain(decks) {
   const saved = localStorage.getItem(DOMAIN_STORAGE_KEY);
-  return saved === "korean" || saved === "wine" ? saved : "korean";
+  if (saved && decks.some((dk) => dk.key === saved)) return saved;
+  return decks[0] ? decks[0].key : "korean";
 }
 
 function newCardId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return `gen-${crypto.randomUUID()}`;
   return `gen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function newDeckKey() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return `deck-${crypto.randomUUID()}`;
+  return `deck-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function buildSessionQueue(deck, domain) {
@@ -210,24 +264,30 @@ function shuffle(arr) {
 
 const EMPTY_KOREAN_FORM = { ko: "", romanized: "", meaning: "", rule: "", source: "" };
 const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "", hypothesis: "", source: "" };
+const EMPTY_GENERIC_FORM = { front: "", back: "", source: "" };
 
 const KOREAN_SOURCE_OPTIONS = ["1行日記", "できる韓国語", "音楽", "ドラマ"];
 const WINE_SOURCE_OPTIONS = ["1冊目の教科書"];
 
 export default function StudyApp() {
+  const [decks, setDecks] = useState(loadDecks);
   const [deck, setDeck] = useState(loadDeck);
-  const [domain, setDomain] = useState(loadDomain);
+  const [domain, setDomain] = useState(() => loadDomain(loadDecks()));
   const [flipped, setFlipped] = useState(false);
   const [queueIdx, setQueueIdx] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
-  const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain()));
+  const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain(loadDecks())));
 
   const [showInput, setShowInput] = useState(false);
   const [showList, setShowList] = useState(false);
   const [koreanForm, setKoreanForm] = useState(EMPTY_KOREAN_FORM);
   const [wineForm, setWineForm] = useState(EMPTY_WINE_FORM);
+  const [genericForm, setGenericForm] = useState(EMPTY_GENERIC_FORM);
   const [formError, setFormError] = useState("");
   const [editingCardId, setEditingCardId] = useState(null);
+  const [showDeckForm, setShowDeckForm] = useState(false);
+  const [deckForm, setDeckForm] = useState({ name: "", iconKey: "book", colorIdx: 0 });
+  const [points, setPoints] = useState(loadPoints);
 
   const [stats, setStats] = useState(loadStats);
   const [testMode, setTestMode] = useState(false);
@@ -267,6 +327,19 @@ export default function StudyApp() {
     localStorage.setItem(MATERIALS_STORAGE_KEY, JSON.stringify(materials));
   }, [materials]);
 
+  useEffect(() => {
+    localStorage.setItem(DECKS_STORAGE_KEY, JSON.stringify(decks));
+  }, [decks]);
+
+  useEffect(() => {
+    localStorage.setItem(POINTS_STORAGE_KEY, JSON.stringify(points));
+  }, [points]);
+
+  useEffect(() => {
+    const today = todayStr();
+    setPoints((prev) => (prev.lastOpenBonusDate === today ? prev : { ...prev, total: prev.total + 1, lastOpenBonusDate: today }));
+  }, []);
+
   const addCard = (card) => {
     const id = newCardId();
     const today = todayStr();
@@ -277,16 +350,18 @@ export default function StudyApp() {
     setSessionQueue((q) => [...q, id]);
     setQueueIdx(0);
     setSessionDone(false);
+    setPoints((p) => ({ ...p, total: p.total + 2 }));
   };
 
   const handleAddCard = () => {
-    if (domain === "korean") {
+    const schema = d.schema;
+    if (schema === "korean") {
       const { ko, romanized, meaning, rule, source } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須だよ。");
         return;
       }
-      if (findDuplicateCard(deck, "korean", "ko", ko)) {
+      if (findDuplicateCard(deck, domain, "ko", ko)) {
         setFormError("その韓国語はもう登録されてるよ。");
         return;
       }
@@ -298,13 +373,13 @@ export default function StudyApp() {
         source: source.trim(),
       });
       setKoreanForm(EMPTY_KOREAN_FORM);
-    } else {
+    } else if (schema === "wine") {
       const { q, a, region, topic, hypothesis, source } = wineForm;
       if (!q.trim() || !a.trim()) {
         setFormError("質問と解答は必須だよ。");
         return;
       }
-      if (findDuplicateCard(deck, "wine", "q", q)) {
+      if (findDuplicateCard(deck, domain, "q", q)) {
         setFormError("同じ質問がもう登録されてるよ。");
         return;
       }
@@ -317,13 +392,27 @@ export default function StudyApp() {
         source: source.trim(),
       });
       setWineForm(EMPTY_WINE_FORM);
+    } else {
+      const { front, back, source } = genericForm;
+      if (!front.trim() || !back.trim()) {
+        setFormError("表と裏は必須だよ。");
+        return;
+      }
+      if (findDuplicateCard(deck, domain, "front", front)) {
+        setFormError("同じ内容がもう登録されてるよ。");
+        return;
+      }
+      addCard({ front: front.trim(), back: back.trim(), source: source.trim() });
+      setGenericForm(EMPTY_GENERIC_FORM);
     }
     setFormError("");
     setShowInput(false);
   };
 
   const openEditCard = (card) => {
-    if (card.domain === "korean") {
+    const cardDeck = decks.find((x) => x.key === card.domain);
+    const schema = cardDeck ? cardDeck.schema : "generic";
+    if (schema === "korean") {
       setKoreanForm({
         ko: card.ko || "",
         romanized: card.romanized || "",
@@ -331,13 +420,19 @@ export default function StudyApp() {
         rule: card.rule === "特になし" ? "" : card.rule || "",
         source: card.source || "",
       });
-    } else {
+    } else if (schema === "wine") {
       setWineForm({
         q: card.q || "",
         a: card.a || "",
         region: card.region === "-" ? "" : card.region || "",
         topic: card.topic === "その他" ? "" : card.topic || "",
         hypothesis: card.hypothesis || "",
+        source: card.source || "",
+      });
+    } else {
+      setGenericForm({
+        front: card.front || "",
+        back: card.back || "",
         source: card.source || "",
       });
     }
@@ -348,13 +443,14 @@ export default function StudyApp() {
   };
 
   const handleEditCard = () => {
-    if (domain === "korean") {
+    const schema = d.schema;
+    if (schema === "korean") {
       const { ko, romanized, meaning, rule, source } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須だよ。");
         return;
       }
-      if (findDuplicateCard(deck, "korean", "ko", ko, editingCardId)) {
+      if (findDuplicateCard(deck, domain, "ko", ko, editingCardId)) {
         setFormError("その韓国語はもう登録されてるよ。");
         return;
       }
@@ -370,13 +466,13 @@ export default function StudyApp() {
         },
       }));
       setKoreanForm(EMPTY_KOREAN_FORM);
-    } else {
+    } else if (schema === "wine") {
       const { q, a, region, topic, hypothesis, source } = wineForm;
       if (!q.trim() || !a.trim()) {
         setFormError("質問と解答は必須だよ。");
         return;
       }
-      if (findDuplicateCard(deck, "wine", "q", q, editingCardId)) {
+      if (findDuplicateCard(deck, domain, "q", q, editingCardId)) {
         setFormError("同じ質問がもう登録されてるよ。");
         return;
       }
@@ -393,6 +489,21 @@ export default function StudyApp() {
         },
       }));
       setWineForm(EMPTY_WINE_FORM);
+    } else {
+      const { front, back, source } = genericForm;
+      if (!front.trim() || !back.trim()) {
+        setFormError("表と裏は必須だよ。");
+        return;
+      }
+      if (findDuplicateCard(deck, domain, "front", front, editingCardId)) {
+        setFormError("同じ内容がもう登録されてるよ。");
+        return;
+      }
+      setDeck((prev) => ({
+        ...prev,
+        [editingCardId]: { ...prev[editingCardId], front: front.trim(), back: back.trim(), source: source.trim() },
+      }));
+      setGenericForm(EMPTY_GENERIC_FORM);
     }
     setFormError("");
     setEditingCardId(null);
@@ -404,6 +515,7 @@ export default function StudyApp() {
     setShowInput(false);
     setKoreanForm(EMPTY_KOREAN_FORM);
     setWineForm(EMPTY_WINE_FORM);
+    setGenericForm(EMPTY_GENERIC_FORM);
     setFormError("");
     if (editingCardId) setShowList(true);
     setEditingCardId(null);
@@ -441,7 +553,8 @@ export default function StudyApp() {
   );
 
   const current = testMode ? deck[testQueue[testIdx]] : deck[sessionQueue[queueIdx]];
-  const d = DOMAINS[domain];
+  const d = decks.find((x) => x.key === domain) || decks[0];
+  const schema = d.schema;
 
   const speak = (text) => {
     if (!window.speechSynthesis) return;
@@ -465,6 +578,7 @@ export default function StudyApp() {
           ...prev,
           testHistory: [...prev.testHistory, { date: today, domain, correct: newScore, total: testQueue.length }],
         }));
+        setPoints((p) => ({ ...p, total: p.total + 5 }));
         setTestDone(true);
       } else {
         setTestIdx((i) => i + 1);
@@ -516,7 +630,61 @@ export default function StudyApp() {
     setEditingCardId(null);
     setKoreanForm(EMPTY_KOREAN_FORM);
     setWineForm(EMPTY_WINE_FORM);
+    setGenericForm(EMPTY_GENERIC_FORM);
     setEditingMaterial(false);
+    setShowDeckForm(false);
+  };
+
+  const openDeckForm = () => {
+    setDeckForm({ name: "", iconKey: "book", colorIdx: 0 });
+    setShowDeckForm(true);
+  };
+
+  const saveNewDeck = () => {
+    const name = deckForm.name.trim();
+    if (!name) return;
+    const key = newDeckKey();
+    const color = ACCENT_PRESETS[deckForm.colorIdx] || ACCENT_PRESETS[0];
+    const newDeck = {
+      key,
+      label: name,
+      accent: color.accent,
+      accentSoft: color.accentSoft,
+      iconKey: deckForm.iconKey,
+      schema: "generic",
+      builtin: false,
+    };
+    setDecks((prev) => [...prev, newDeck]);
+    setShowDeckForm(false);
+    switchDomain(key);
+  };
+
+  const deleteDeck = (key) => {
+    const target = decks.find((x) => x.key === key);
+    if (!target || target.builtin) return;
+    if (!window.confirm(`「${target.label}」デッキを削除する？中のカードも全部消えるよ。元に戻せないよ。`)) return;
+    const remaining = decks.filter((x) => x.key !== key);
+    setDeck((prev) => {
+      const next = {};
+      Object.entries(prev).forEach(([id, c]) => {
+        if (c.domain !== key) next[id] = c;
+      });
+      return next;
+    });
+    setExamDates((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setMaterials((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setDecks(remaining);
+    if (domain === key) {
+      switchDomain(remaining[0] ? remaining[0].key : "korean");
+    }
   };
 
   const restart = () => {
@@ -692,11 +860,11 @@ export default function StudyApp() {
           fontWeight: 600,
         }}
       >
-        {domain === "korean" ? "発音カード" : current.region}
+        {schema === "korean" ? "発音カード" : schema === "wine" ? current.region : d.label}
       </div>
 
       {!flipped ? (
-        domain === "korean" ? (
+        schema === "korean" ? (
           <div style={{ textAlign: "center" }}>
             <div
               style={{
@@ -731,15 +899,22 @@ export default function StudyApp() {
             </button>
             <div style={{ marginTop: 16, fontSize: 12, color: "#9A9184" }}>タップして意味を確認</div>
           </div>
-        ) : (
+        ) : schema === "wine" ? (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, lineHeight: 1.5, marginBottom: 8 }}>
               {current.q}
             </div>
             <div style={{ fontSize: 12, color: "#9A9184", marginTop: 16 }}>タップして解答を確認</div>
           </div>
+        ) : (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 22, fontWeight: 600, lineHeight: 1.5 }}>
+              {current.front}
+            </div>
+            <div style={{ fontSize: 12, color: "#9A9184", marginTop: 16 }}>タップして裏面を確認</div>
+          </div>
         )
-      ) : domain === "korean" ? (
+      ) : schema === "korean" ? (
         <div>
           <div style={{ fontSize: 13, color: "#9A9184", marginBottom: 4 }}>{current.romanized}</div>
           <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 24, fontWeight: 600, marginBottom: 14 }}>
@@ -762,7 +937,7 @@ export default function StudyApp() {
             <div style={{ fontSize: 11, color: "#9A9184", marginTop: 10 }}>📎 {current.source}</div>
           )}
         </div>
-      ) : (
+      ) : schema === "wine" ? (
         <div>
           <div style={{ fontSize: 11, color: d.accent, fontWeight: 600, marginBottom: 6 }}>{current.topic}</div>
           <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 19, fontWeight: 600, lineHeight: 1.5 }}>
@@ -771,6 +946,15 @@ export default function StudyApp() {
           {current.hypothesis && (
             <div style={{ fontSize: 12, color: "#9A9184", marginTop: 10 }}>💭 最初の仮説: {current.hypothesis}</div>
           )}
+          {current.source && (
+            <div style={{ fontSize: 11, color: "#9A9184", marginTop: 6 }}>📎 {current.source}</div>
+          )}
+        </div>
+      ) : (
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, fontWeight: 600, lineHeight: 1.5, marginBottom: 10 }}>
+            {current.back}
+          </div>
           {current.source && (
             <div style={{ fontSize: 11, color: "#9A9184", marginTop: 6 }}>📎 {current.source}</div>
           )}
@@ -823,24 +1007,41 @@ export default function StudyApp() {
           >
             Sena's Study Deck
           </h1>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              marginTop: 10,
+              padding: "6px 14px",
+              borderRadius: 999,
+              background: "#FFFFFF",
+              border: "1px solid #E4DFD3",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#6B6355",
+            }}
+          >
+            ✦ {points.total.toLocaleString()} pt
+          </div>
         </div>
 
         {/* Domain tabs */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-          {Object.entries(DOMAINS).map(([key, val]) => {
-            const active = key === domain;
-            const TIcon = val.icon;
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
+          {decks.map((val) => {
+            const active = val.key === domain;
+            const TIcon = DECK_ICONS[val.iconKey] || BookOpen;
             return (
               <button
-                key={key}
-                onClick={() => switchDomain(key)}
+                key={val.key}
+                onClick={() => switchDomain(val.key)}
                 style={{
-                  flex: 1,
+                  flex: "0 0 auto",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 8,
-                  padding: "12px 10px",
+                  padding: "12px 16px",
                   borderRadius: 10,
                   border: active ? `2px solid ${val.accent}` : "2px solid transparent",
                   background: active ? val.accentSoft : "#E4DFD3",
@@ -848,6 +1049,7 @@ export default function StudyApp() {
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: "pointer",
+                  whiteSpace: "nowrap",
                   transition: "all 0.15s ease",
                 }}
               >
@@ -856,7 +1058,138 @@ export default function StudyApp() {
               </button>
             );
           })}
+          <button
+            onClick={() => (showDeckForm ? setShowDeckForm(false) : openDeckForm())}
+            style={{
+              flex: "0 0 auto",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              padding: "12px 14px",
+              borderRadius: 10,
+              border: "1.5px dashed #9A9184",
+              background: "transparent",
+              color: "#6B6355",
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <Plus size={16} />
+            デッキ
+          </button>
         </div>
+
+        {showDeckForm && (
+          <div style={{ background: "#FFFFFF", borderRadius: 12, padding: 16, marginBottom: 20, border: "1px solid #E4DFD3" }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6355", marginBottom: 10 }}>新しいデッキを作る</div>
+            <input
+              value={deckForm.name}
+              onChange={(e) => setDeckForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="デッキ名（例: 英語）"
+              style={{ ...inputStyle, marginBottom: 10 }}
+            />
+            <div style={{ fontSize: 12, color: "#9A9184", marginBottom: 6 }}>アイコン</div>
+            <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+              {Object.entries(DECK_ICONS).map(([key, IconComp]) => (
+                <button
+                  key={key}
+                  onClick={() => setDeckForm((f) => ({ ...f, iconKey: key }))}
+                  aria-label={key}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    border: deckForm.iconKey === key ? "2px solid #6B6355" : "1px solid #E4DFD3",
+                    background: "#F7F4EE",
+                    color: "#4A4438",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                >
+                  <IconComp size={16} />
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: "#9A9184", marginBottom: 6 }}>カラー</div>
+            <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+              {ACCENT_PRESETS.map((c, i) => (
+                <button
+                  key={i}
+                  onClick={() => setDeckForm((f) => ({ ...f, colorIdx: i }))}
+                  aria-label={`color-${i}`}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    border: deckForm.colorIdx === i ? "2px solid #2B2620" : "1px solid #E4DFD3",
+                    background: c.accent,
+                    cursor: "pointer",
+                  }}
+                />
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => setShowDeckForm(false)}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  borderRadius: 8,
+                  border: "1px solid #E4DFD3",
+                  background: "transparent",
+                  color: "#6B6355",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={saveNewDeck}
+                style={{
+                  flex: 2,
+                  padding: "10px 0",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "#4A4438",
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                作る
+              </button>
+            </div>
+            {decks.some((x) => !x.builtin) && (
+              <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #E4DFD3" }}>
+                <div style={{ fontSize: 12, color: "#9A9184", marginBottom: 6 }}>作ったデッキを削除</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {decks
+                    .filter((x) => !x.builtin)
+                    .map((x) => (
+                      <div key={x.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
+                        <span>{x.label}</span>
+                        <button
+                          onClick={() => deleteDeck(x.key)}
+                          aria-label="デッキを削除"
+                          style={{ border: "none", background: "transparent", color: "#B0483A", cursor: "pointer", padding: 4 }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Page nav */}
         <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
@@ -1212,7 +1545,11 @@ export default function StudyApp() {
                 }}
               >
                 <Plus size={16} />
-                {domain === "korean" ? "今日学んだ単語・表現を追加" : "今日学んだワイン知識を追加"}
+                {schema === "korean"
+                  ? "今日学んだ単語・表現を追加"
+                  : schema === "wine"
+                  ? "今日学んだワイン知識を追加"
+                  : `今日学んだ${d.label}の内容を追加`}
               </button>
               <button
                 onClick={() => setShowList(true)}
@@ -1304,11 +1641,13 @@ export default function StudyApp() {
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14 }}>{domain === "korean" ? c.ko : c.q}</div>
-                        <div style={{ fontSize: 12, color: "#9A9184", marginTop: 2 }}>
-                          {domain === "korean" ? c.meaning : c.a}
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>
+                          {schema === "korean" ? c.ko : schema === "wine" ? c.q : c.front}
                         </div>
-                        {domain === "wine" && c.hypothesis && (
+                        <div style={{ fontSize: 12, color: "#9A9184", marginTop: 2 }}>
+                          {schema === "korean" ? c.meaning : schema === "wine" ? c.a : c.back}
+                        </div>
+                        {schema === "wine" && c.hypothesis && (
                           <div style={{ fontSize: 11, color: "#9A9184", marginTop: 2 }}>💭 仮説: {c.hypothesis}</div>
                         )}
                         {c.source && (
@@ -1370,7 +1709,7 @@ export default function StudyApp() {
                   カードを編集中
                 </div>
               )}
-              {domain === "korean" ? (
+              {schema === "korean" ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                   <input
                     value={koreanForm.ko}
@@ -1409,7 +1748,7 @@ export default function StudyApp() {
                     ))}
                   </select>
                 </div>
-              ) : (
+              ) : schema === "wine" ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                   <textarea
                     value={wineForm.q}
@@ -1453,6 +1792,27 @@ export default function StudyApp() {
                       </option>
                     ))}
                   </select>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                  <textarea
+                    value={genericForm.front}
+                    onChange={(e) => setGenericForm((f) => ({ ...f, front: e.target.value }))}
+                    placeholder="表面（問題・単語など）*"
+                    style={{ ...inputStyle, minHeight: 50, resize: "vertical" }}
+                  />
+                  <textarea
+                    value={genericForm.back}
+                    onChange={(e) => setGenericForm((f) => ({ ...f, back: e.target.value }))}
+                    placeholder="裏面（答え・意味など）*"
+                    style={{ ...inputStyle, minHeight: 50, resize: "vertical" }}
+                  />
+                  <input
+                    value={genericForm.source}
+                    onChange={(e) => setGenericForm((f) => ({ ...f, source: e.target.value }))}
+                    placeholder="出典・メモ（任意）"
+                    style={inputStyle}
+                  />
                 </div>
               )}
               {formError && <div style={{ color: "#B0483A", fontSize: 12, marginBottom: 8 }}>{formError}</div>}
