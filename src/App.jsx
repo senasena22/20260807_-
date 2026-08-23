@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, User, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -223,15 +223,16 @@ function buildSessionQueue(deck, domain) {
 function loadStats() {
   try {
     const raw = localStorage.getItem(STATS_STORAGE_KEY);
-    if (!raw) return { studyDates: [], masteredEvents: [], testHistory: [] };
+    if (!raw) return { studyDates: [], masteredEvents: [], testHistory: [], studyDomains: [] };
     const parsed = JSON.parse(raw);
     return {
       studyDates: Array.isArray(parsed.studyDates) ? parsed.studyDates : [],
       masteredEvents: Array.isArray(parsed.masteredEvents) ? parsed.masteredEvents : [],
       testHistory: Array.isArray(parsed.testHistory) ? parsed.testHistory : [],
+      studyDomains: Array.isArray(parsed.studyDomains) ? parsed.studyDomains : [],
     };
   } catch {
-    return { studyDates: [], masteredEvents: [], testHistory: [] };
+    return { studyDates: [], masteredEvents: [], testHistory: [], studyDomains: [] };
   }
 }
 
@@ -642,7 +643,9 @@ export default function StudyApp() {
       const studyDates = prev.studyDates.includes(today) ? prev.studyDates : [...prev.studyDates, today];
       const justMastered = correct && box >= MASTERY_BOX && prevBox < MASTERY_BOX;
       const masteredEvents = justMastered ? [...prev.masteredEvents, { date: today, domain, cardId }] : prev.masteredEvents;
-      return { ...prev, studyDates, masteredEvents };
+      const hasDomainToday = prev.studyDomains.some((e) => e.date === today && e.domain === domain);
+      const studyDomains = hasDomainToday ? prev.studyDomains : [...prev.studyDomains, { date: today, domain }];
+      return { ...prev, studyDates, masteredEvents, studyDomains };
     });
     setFlipped(false);
     if (queueIdx + 1 >= sessionQueue.length) {
@@ -833,22 +836,35 @@ export default function StudyApp() {
     .sort()[0];
 
   const streak = computeStreak(stats.studyDates);
-  const weekStart = addDaysStr(todayStr(), -6);
-  const weeklyMastered = stats.masteredEvents.filter((e) => e.domain === domain && e.date >= weekStart).length;
   const calendarDays = useMemo(() => buildCalendarDays(stats.studyDates), [stats.studyDates]);
   const calendarMonthCells = useMemo(() => {
     const { year, month } = calendarMonth;
     const firstWeekday = new Date(year, month, 1).getDay();
     const totalDays = new Date(year, month + 1, 0).getDate();
     const studySet = new Set(stats.studyDates);
+    const domainsByDate = {};
+    stats.studyDomains.forEach((e) => {
+      if (!domainsByDate[e.date]) domainsByDate[e.date] = new Set();
+      domainsByDate[e.date].add(e.domain);
+    });
     const cells = [];
     for (let i = 0; i < firstWeekday; i++) cells.push(null);
     for (let day = 1; day <= totalDays; day++) {
       const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      cells.push({ day, date: key, studied: studySet.has(key) });
+      const domainsHere = domainsByDate[key] ? Array.from(domainsByDate[key]) : [];
+      let color = null;
+      if (domainsHere.length >= 2) {
+        color = "#E8A93C";
+      } else if (domainsHere.length === 1) {
+        const dk = decks.find((x) => x.key === domainsHere[0]);
+        color = dk ? dk.accent : "#4e604f";
+      } else if (studySet.has(key)) {
+        color = "#4e604f";
+      }
+      cells.push({ day, date: key, studied: studySet.has(key), color });
     }
     return cells;
-  }, [calendarMonth, stats.studyDates]);
+  }, [calendarMonth, stats.studyDates, stats.studyDomains, decks]);
   const longestStreak = useMemo(() => {
     const sorted = [...stats.studyDates].sort();
     let longest = 0;
@@ -902,18 +918,15 @@ export default function StudyApp() {
   const handleShare = async () => {
     try {
       const canvas = await generateShareImage({
-        domainLabel: d.label,
-        accent: d.accent,
-        accentSoft: d.accentSoft,
         streak,
-        weeklyMastered,
-        totalMastered,
-        totalCards,
+        points: points.total,
+        totalMastered: totalMasteredAll,
+        totalCards: totalCardsAll,
         calendarDays,
       });
       canvas.toBlob(async (blob) => {
         if (!blob) return;
-        const file = new File([blob], `ippo-${domain}-${todayStr()}.png`, { type: "image/png" });
+        const file = new File([blob], `ippo-${todayStr()}.png`, { type: "image/png" });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({ files: [file], title: "いっぽ 進捗" });
@@ -1873,20 +1886,9 @@ export default function StudyApp() {
           </div>
         )}
 
-        {/* Profile */}
-        {page === "profile" && (
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 22, marginBottom: 16 }}>
-              プロフィール
-            </div>
-
-            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 18, border: "1px solid #E5E2DC", marginBottom: 14, textAlign: "center" }}>
-              <div style={{ fontSize: 12, color: "#747872", marginBottom: 4 }}>累計ポイント</div>
-              <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 36, color: "#E8A93C" }}>
-                ✦ {points.total.toLocaleString()}
-              </div>
-            </div>
-
+        {/* Study record (calendar + share) */}
+        {page === "home" && (
+          <div style={{ marginBottom: 12 }}>
             <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 14, border: "1px solid #E5E2DC", textAlign: "center", marginBottom: 14 }}>
               <div style={{ fontSize: 12, color: "#747872", marginBottom: 4 }}>全デッキ定着</div>
               <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 22, color: "#4e604f" }}>
@@ -1896,16 +1898,16 @@ export default function StudyApp() {
 
             <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 14 }}>
               <button onClick={() => setShowCalendar((v) => !v)} style={smallLinkButtonStyle(d.accent, true)}>
-                📅 {showCalendar ? "カレンダーを閉じる" : "カレンダー"}
+                📅 {showCalendar ? "カレンダーを閉じる" : "学習カレンダー"}
               </button>
               <button onClick={handleShare} style={smallLinkButtonStyle(d.accent, true)}>
-                📤 {d.label}の進捗をシェア
+                📤 進捗をシェア
               </button>
             </div>
           </div>
         )}
 
-        {page === "profile" && showCalendar && (
+        {page === "home" && showCalendar && (
           <div
             style={{
               background: "#FFFFFF",
@@ -1974,9 +1976,9 @@ export default function StudyApp() {
                         justifyContent: "center",
                         fontSize: 13,
                         fontWeight: 600,
-                        background: cell.studied ? "#E8A93C" : "transparent",
-                        color: cell.studied ? "#1a1c1b" : isToday ? d.accent : "#434842",
-                        border: isToday && !cell.studied ? `1.5px solid ${d.accent}` : "1.5px solid transparent",
+                        background: cell.color || "transparent",
+                        color: cell.color ? (cell.color === "#E8A93C" ? "#1a1c1b" : "#faf9f7") : isToday ? d.accent : "#434842",
+                        border: isToday && !cell.color ? `1.5px solid ${d.accent}` : "1.5px solid transparent",
                       }}
                     >
                       {cell.day}
@@ -1986,10 +1988,16 @@ export default function StudyApp() {
               })}
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 14, fontSize: 11, color: "#747872" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 14, fontSize: 11, color: "#747872" }}>
+              {decks.map((dk) => (
+                <span key={dk.key} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: dk.accent, display: "inline-block" }} />
+                  {dk.label}
+                </span>
+              ))}
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
                 <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#E8A93C", display: "inline-block" }} />
-                学習した日
+                複数デッキ
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
                 <span style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${d.accent}`, display: "inline-block" }} />
@@ -2652,7 +2660,6 @@ export default function StudyApp() {
             { key: "library", label: "ライブラリ", Icon: Library },
             { key: "goals", label: "目標", Icon: Target },
             { key: "report", label: "レポート", Icon: BarChart3 },
-            { key: "profile", label: "プロフィール", Icon: User },
           ].map(({ key, label, Icon }) => {
             const active = page === key;
             return (
@@ -2707,7 +2714,9 @@ function smallLinkButtonStyle(color, prominent = false) {
   };
 }
 
-async function generateShareImage({ domainLabel, accent, accentSoft, streak, weeklyMastered, totalMastered, totalCards, calendarDays }) {
+async function generateShareImage({ streak, points, totalMastered, totalCards, calendarDays }) {
+  const accent = "#4e604f";
+  const accentSoft = "#E4EBE8";
   if (document.fonts && document.fonts.ready) {
     await document.fonts.ready.catch(() => {});
   }
@@ -2744,7 +2753,7 @@ async function generateShareImage({ domainLabel, accent, accentSoft, streak, wee
 
   ctx.fillStyle = "#1a1c1b";
   ctx.font = '700 32px "Nunito Sans", sans-serif';
-  ctx.fillText(`${domainLabel}の記録`, cx, y);
+  ctx.fillText("いっぽの記録", cx, y);
   y += 100;
 
   ctx.fillStyle = accent;
@@ -2764,7 +2773,7 @@ async function generateShareImage({ domainLabel, accent, accentSoft, streak, wee
   ctx.fillText(`定着 ${totalMastered} / ${totalCards} 枚`, cx, y + 4);
   ctx.fillStyle = "#434842";
   ctx.font = '500 15px "Nunito Sans", sans-serif';
-  ctx.fillText(`今週 +${weeklyMastered}枚`, cx, y + 30);
+  ctx.fillText(`累計 ${points.toLocaleString()}pt`, cx, y + 30);
   y += 100;
 
   ctx.fillStyle = "#434842";
