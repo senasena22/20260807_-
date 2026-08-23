@@ -578,6 +578,14 @@ export default function StudyApp() {
     switchDomain(key);
     setPage("review");
   };
+  const goToTodayGoal = () => {
+    if (buildSessionQueue(deck, domain).length > 0) {
+      openDeckReview(domain);
+      return;
+    }
+    const nextDeck = decks.find((dk) => buildSessionQueue(deck, dk.key).length > 0);
+    if (nextDeck) openDeckReview(nextDeck.key);
+  };
   const deckTotalCards = (key) => Object.values(deck).filter((c) => c.domain === key).length;
   const deckMasteredCards = (key) => Object.values(deck).filter((c) => c.domain === key && c.box >= MASTERY_BOX).length;
 
@@ -1112,11 +1120,30 @@ export default function StudyApp() {
               </div>
             </div>
 
-            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 18, border: "1px solid #E5E2DC", marginBottom: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 6 }}>今日の目標</div>
-              <div style={{ fontSize: 13, color: "#747872" }}>
-                {todayDueAcrossDecks > 0 ? `今日は${todayDueAcrossDecks}枚の復習があるよ` : "今日の復習はもう終わってるよ、えらい！"}
+            <div
+              onClick={todayDueAcrossDecks > 0 ? goToTodayGoal : undefined}
+              style={{
+                background: "#FFFFFF",
+                borderRadius: 16,
+                padding: 18,
+                border: "1px solid #E5E2DC",
+                marginBottom: 16,
+                cursor: todayDueAcrossDecks > 0 ? "pointer" : "default",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 6 }}>今日の目標</div>
+                <div style={{ fontSize: 13, color: "#747872" }}>
+                  {todayDueAcrossDecks > 0 ? `今日は${todayDueAcrossDecks}枚の復習があるよ` : "今日の復習はもう終わってるよ、えらい！"}
+                </div>
               </div>
+              {todayDueAcrossDecks > 0 && (
+                <div style={{ color: "#E8A93C", fontSize: 20, flexShrink: 0 }}>›</div>
+              )}
             </div>
 
             <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 10 }}>学習の続きから</div>
