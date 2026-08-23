@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Library, User, BarChart3 } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, User, BarChart3 } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -315,7 +315,7 @@ export default function StudyApp() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [reportRange, setReportRange] = useState("week");
 
-  const [page, setPage] = useState("library");
+  const [page, setPage] = useState("home");
   const [materials, setMaterials] = useState(loadMaterials);
   const [editingMaterial, setEditingMaterial] = useState(false);
   const [materialForm, setMaterialForm] = useState({ name: "", totalUnits: "", currentUnit: "", daysPerUnit: "" });
@@ -835,6 +835,11 @@ export default function StudyApp() {
     testsInRange.length > 0
       ? Math.round((testsInRange.reduce((sum, t) => sum + t.correct / t.total, 0) / testsInRange.length) * 100)
       : null;
+  const overallAccuracy =
+    stats.testHistory.length > 0
+      ? Math.round((stats.testHistory.reduce((sum, t) => sum + t.correct / t.total, 0) / stats.testHistory.length) * 100)
+      : null;
+  const todayDueAcrossDecks = decks.reduce((sum, dk) => sum + buildSessionQueue(deck, dk.key).length, 0);
 
   const material = materials[domain];
   const materialRemaining = material ? Math.max(0, material.totalUnits - material.currentUnit) : 0;
@@ -1075,6 +1080,168 @@ export default function StudyApp() {
             ✦ {points.total.toLocaleString()} pt
           </div>
         </div>
+
+        {/* Home */}
+        {page === "home" && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 22, marginBottom: 6 }}>
+              こんにちは！
+            </div>
+            <div style={{ fontSize: 13, color: "#434842", marginBottom: 16, lineHeight: 1.6 }}>
+              今日も一歩ずつ進んでいきましょう。あなたのペースで大丈夫だよ。
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
+              <div style={{ background: "#FFFFFF", borderRadius: 14, padding: 12, border: "1px solid #E5E2DC", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#747872", marginBottom: 2 }}>連続</div>
+                <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 18, color: "#4e604f" }}>
+                  🔥 {streak}
+                </div>
+              </div>
+              <div style={{ background: "#FFFFFF", borderRadius: 14, padding: 12, border: "1px solid #E5E2DC", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#747872", marginBottom: 2 }}>ポイント</div>
+                <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 18, color: "#E8A93C" }}>
+                  ✦ {points.total}
+                </div>
+              </div>
+              <div style={{ background: "#FFFFFF", borderRadius: 14, padding: 12, border: "1px solid #E5E2DC", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#747872", marginBottom: 2 }}>正解率</div>
+                <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 18, color: "#4e604f" }}>
+                  {overallAccuracy !== null ? `${overallAccuracy}%` : "-"}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 18, border: "1px solid #E5E2DC", marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 6 }}>今日の目標</div>
+              <div style={{ fontSize: 13, color: "#747872" }}>
+                {todayDueAcrossDecks > 0 ? `今日は${todayDueAcrossDecks}枚の復習があるよ` : "今日の復習はもう終わってるよ、えらい！"}
+              </div>
+            </div>
+
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 10 }}>学習の続きから</div>
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 18, border: "1px solid #E5E2DC", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 10,
+                    background: d.accentSoft,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: d.accent,
+                    flexShrink: 0,
+                  }}
+                >
+                  <DIcon size={22} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>{d.label}</div>
+                  <div style={{ fontSize: 12, color: "#747872" }}>
+                    定着 {deckMasteredCards(domain)}/{deckTotalCards(domain)}枚
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setPage("review")}
+                style={{
+                  width: "100%",
+                  padding: "12px 0",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "#E8A93C",
+                  color: "#1a1c1b",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: "pointer",
+                }}
+              >
+                学習を続ける
+              </button>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842" }}>マイデッキ</div>
+              <button
+                onClick={() => setPage("library")}
+                style={{ border: "none", background: "transparent", color: d.accent, fontWeight: 600, fontSize: 12, cursor: "pointer" }}
+              >
+                すべて見る
+              </button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {decks.map((val) => {
+                const TIcon = DECK_ICONS[val.iconKey] || BookOpen;
+                const total = deckTotalCards(val.key);
+                const mastered = deckMasteredCards(val.key);
+                const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+                return (
+                  <div
+                    key={val.key}
+                    onClick={() => openDeckReview(val.key)}
+                    style={{
+                      background: "#FFFFFF",
+                      border: "1px solid #E5E2DC",
+                      borderRadius: 16,
+                      padding: 14,
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 10,
+                        background: val.accentSoft,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: val.accent,
+                      }}
+                    >
+                      <TIcon size={20} />
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{val.label}</div>
+                    <div style={{ height: 6, background: "#e9e2d4", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${pct}%`, background: val.accent }} />
+                    </div>
+                    <div style={{ fontSize: 11, color: "#747872" }}>
+                      {total > 0 ? `${mastered}/${total} 定着・${pct}%` : "カードなし"}
+                    </div>
+                  </div>
+                );
+              })}
+              <div
+                onClick={() => {
+                  setPage("library");
+                  openDeckForm();
+                }}
+                style={{
+                  border: "1.5px dashed #747872",
+                  borderRadius: 16,
+                  background: "transparent",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: 20,
+                  cursor: "pointer",
+                  color: "#434842",
+                  minHeight: 120,
+                }}
+              >
+                <Plus size={20} />
+                <span style={{ fontSize: 13, fontWeight: 600 }}>新しいデッキ</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Library */}
         {page === "library" && (
@@ -2393,6 +2560,7 @@ export default function StudyApp() {
           }}
         >
           {[
+            { key: "home", label: "ホーム", Icon: Home },
             { key: "library", label: "ライブラリ", Icon: Library },
             { key: "goals", label: "目標", Icon: Target },
             { key: "report", label: "レポート", Icon: BarChart3 },
