@@ -1857,6 +1857,26 @@ export default function StudyApp() {
                     編集
                   </button>
                 </div>
+                <a
+                  href={`https://www.amazon.co.jp/s?k=${encodeURIComponent(material.name)}&i=digital-text`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "block",
+                    textAlign: "center",
+                    marginTop: 10,
+                    padding: "10px 0",
+                    borderRadius: 8,
+                    border: "none",
+                    background: "#E8A93C",
+                    color: "#1a1c1b",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    textDecoration: "none",
+                  }}
+                >
+                  📖 Kindleで探す
+                </a>
               </div>
             ) : (
               <button onClick={openMaterialEditor} style={smallLinkButtonStyle(d.accent, true)}>
