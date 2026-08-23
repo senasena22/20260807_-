@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, User, BarChart3 } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, User, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -313,6 +313,10 @@ export default function StudyApp() {
   const [examDateInput, setExamDateInput] = useState("");
 
   const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
   const [reportRange, setReportRange] = useState("week");
 
   const [page, setPage] = useState("home");
@@ -832,28 +836,44 @@ export default function StudyApp() {
   const weekStart = addDaysStr(todayStr(), -6);
   const weeklyMastered = stats.masteredEvents.filter((e) => e.domain === domain && e.date >= weekStart).length;
   const calendarDays = useMemo(() => buildCalendarDays(stats.studyDates), [stats.studyDates]);
-  const calendarWeeks = useMemo(() => {
-    const weeks = [];
-    for (let c = 0; c < CALENDAR_WEEKS; c++) weeks.push(calendarDays.slice(c * 7, c * 7 + 7));
-    return weeks;
-  }, [calendarDays]);
-  const calendarWeekdayLabels = useMemo(() => {
-    if (calendarDays.length === 0) return [];
-    const weekday0 = new Date(calendarDays[0].date).getDay();
-    const JA_WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
-    return Array.from({ length: 7 }, (_, r) => {
-      const wd = (weekday0 + r) % 7;
-      return wd === 1 || wd === 3 || wd === 5 ? JA_WEEKDAYS[wd] : "";
+  const calendarMonthCells = useMemo(() => {
+    const { year, month } = calendarMonth;
+    const firstWeekday = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const studySet = new Set(stats.studyDates);
+    const cells = [];
+    for (let i = 0; i < firstWeekday; i++) cells.push(null);
+    for (let day = 1; day <= totalDays; day++) {
+      const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      cells.push({ day, date: key, studied: studySet.has(key) });
+    }
+    return cells;
+  }, [calendarMonth, stats.studyDates]);
+  const longestStreak = useMemo(() => {
+    const sorted = [...stats.studyDates].sort();
+    let longest = 0;
+    let current = 0;
+    let prev = null;
+    for (const dt of sorted) {
+      current = prev && addDaysStr(prev, 1) === dt ? current + 1 : 1;
+      longest = Math.max(longest, current);
+      prev = dt;
+    }
+    return longest;
+  }, [stats.studyDates]);
+  const changeCalendarMonth = (delta) => {
+    setCalendarMonth((prev) => {
+      let month = prev.month + delta;
+      let year = prev.year;
+      if (month < 0) {
+        month = 11;
+        year -= 1;
+      } else if (month > 11) {
+        month = 0;
+        year += 1;
+      }
+      return { year, month };
     });
-  }, [calendarDays]);
-  const calendarMonthLabel = (weekIdx) => {
-    const week = calendarWeeks[weekIdx];
-    if (!week || week.length === 0) return "";
-    const month = week[0].date.split("-")[1];
-    if (weekIdx === 0) return `${Number(month)}月`;
-    const prevWeek = calendarWeeks[weekIdx - 1];
-    const prevMonth = prevWeek[0].date.split("-")[1];
-    return month !== prevMonth ? `${Number(month)}月` : "";
   };
   const lastTestAll = [...stats.testHistory].reverse()[0];
   const totalCardsAll = Object.keys(deck).length;
@@ -1895,65 +1915,84 @@ export default function StudyApp() {
               border: `1px solid ${d.accentSoft}`,
             }}
           >
-            <div style={{ fontSize: 12, color: "#434842", marginBottom: 2, textAlign: "center" }}>
-              直近{CALENDAR_WEEKS}週間の学習記録
-            </div>
-            <div style={{ fontSize: 11, color: "#747872", marginBottom: 12, textAlign: "center" }}>
-              {calendarDays[0]?.date.replaceAll("-", "/")} 〜 {calendarDays[calendarDays.length - 1]?.date.replaceAll("-", "/")}
-            </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <div>
-                <div style={{ display: "flex", gap: 3, marginBottom: 3 }}>
-                  <div style={{ width: 16, flexShrink: 0 }} />
-                  {calendarWeeks.map((_, c) => (
-                    <div key={c} style={{ width: 12, fontSize: 9, color: "#747872", flexShrink: 0 }}>
-                      {calendarMonthLabel(c)}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 3 }}>
-                  <div style={{ width: 16, flexShrink: 0, display: "flex", flexDirection: "column", gap: 3 }}>
-                    {calendarWeekdayLabels.map((label, r) => (
-                      <div key={r} style={{ height: 12, fontSize: 9, color: "#747872", lineHeight: "12px" }}>
-                        {label}
-                      </div>
-                    ))}
-                  </div>
-                  {calendarWeeks.map((week, c) => (
-                    <div key={c} style={{ display: "flex", flexDirection: "column", gap: 3, flexShrink: 0 }}>
-                      {week.map((day) => {
-                        const isToday = day.date === todayStr();
-                        return (
-                          <div
-                            key={day.date}
-                            title={`${day.date}${day.studied ? "・学習した" : ""}`}
-                            style={{
-                              width: 12,
-                              height: 12,
-                              borderRadius: 3,
-                              boxSizing: "border-box",
-                              background: day.studied ? d.accent : "#e9e2d4",
-                              border: isToday ? `1.5px solid ${d.accent}` : "1.5px solid transparent",
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
+            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+              <div style={{ flex: 1, textAlign: "center", background: "#F7F4EE", borderRadius: 12, padding: "12px 8px" }}>
+                <div style={{ fontSize: 20 }}>🔥</div>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#4e604f" }}>{streak}日</div>
+                <div style={{ fontSize: 11, color: "#747872" }}>現在の連続</div>
+              </div>
+              <div style={{ flex: 1, textAlign: "center", background: "#F7F4EE", borderRadius: 12, padding: "12px 8px" }}>
+                <div style={{ fontSize: 20 }}>🏆</div>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#4e604f" }}>{longestStreak}日</div>
+                <div style={{ fontSize: 11, color: "#747872" }}>最長連続記録</div>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 12, fontSize: 11, color: "#747872" }}>
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <button
+                onClick={() => changeCalendarMonth(-1)}
+                aria-label="前の月"
+                style={{ border: "none", background: "transparent", color: "#434842", cursor: "pointer", padding: 6, display: "flex" }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>
+                {calendarMonth.year}年{calendarMonth.month + 1}月
+              </div>
+              <button
+                onClick={() => changeCalendarMonth(1)}
+                aria-label="次の月"
+                style={{ border: "none", background: "transparent", color: "#434842", cursor: "pointer", padding: 6, display: "flex" }}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: 6 }}>
+              {["日", "月", "火", "水", "木", "金", "土"].map((w) => (
+                <div key={w} style={{ textAlign: "center", fontSize: 11, color: "#747872", fontWeight: 600 }}>
+                  {w}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", rowGap: 6 }}>
+              {calendarMonthCells.map((cell, i) => {
+                if (!cell) return <div key={`empty-${i}`} />;
+                const isToday = cell.date === todayStr();
+                return (
+                  <div key={cell.date} style={{ display: "flex", justifyContent: "center" }}>
+                    <div
+                      title={`${cell.date}${cell.studied ? "・学習した" : ""}`}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        boxSizing: "border-box",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        background: cell.studied ? "#E8A93C" : "transparent",
+                        color: cell.studied ? "#1a1c1b" : isToday ? d.accent : "#434842",
+                        border: isToday && !cell.studied ? `1.5px solid ${d.accent}` : "1.5px solid transparent",
+                      }}
+                    >
+                      {cell.day}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 14, fontSize: 11, color: "#747872" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 2, background: d.accent, display: "inline-block" }} />
+                <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#E8A93C", display: "inline-block" }} />
                 学習した日
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 2, background: "#e9e2d4", display: "inline-block" }} />
-                お休みの日
-              </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 2, border: `1.5px solid ${d.accent}`, display: "inline-block" }} />
+                <span style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${d.accent}`, display: "inline-block" }} />
                 今日
               </span>
             </div>
