@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 
 // ---------- Content ----------
@@ -52,6 +52,17 @@ const EXAM_DATES_STORAGE_KEY = "study-srs.examDates.v1";
 const MATERIALS_STORAGE_KEY = "study-srs.materials.v1";
 const POINTS_STORAGE_KEY = "study-srs.points.v1";
 const COMPLETED_MATERIALS_STORAGE_KEY = "study-srs.completedMaterials.v1";
+
+const ALL_STORAGE_KEYS = [
+  DECK_STORAGE_KEY,
+  DECKS_STORAGE_KEY,
+  DOMAIN_STORAGE_KEY,
+  STATS_STORAGE_KEY,
+  EXAM_DATES_STORAGE_KEY,
+  MATERIALS_STORAGE_KEY,
+  POINTS_STORAGE_KEY,
+  COMPLETED_MATERIALS_STORAGE_KEY,
+];
 
 // days until next review after each successful box level (box 1〜5)
 const INTERVALS_DAYS = [1, 3, 7, 16, 30];
@@ -914,6 +925,53 @@ export default function StudyApp() {
   const materialFinishDate = material ? addDaysStr(todayStr(), materialDaysNeeded) : null;
   const examDaysLeft = examDates[domain] ? daysUntil(examDates[domain]) : null;
   const materialBuffer = material && examDaysLeft !== null ? examDaysLeft - materialDaysNeeded : null;
+
+  const fileInputRef = useRef(null);
+
+  const handleExportBackup = () => {
+    const data = {};
+    ALL_STORAGE_KEYS.forEach((key) => {
+      const value = localStorage.getItem(key);
+      if (value !== null) data[key] = value;
+    });
+    const payload = { app: "ippo", version: 1, exportedAt: new Date().toISOString(), data };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ippo-backup-${todayStr()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!parsed.data || typeof parsed.data !== "object") {
+          window.alert("このファイルはバックアップとして読み込めなかったよ。");
+          return;
+        }
+        if (!window.confirm("今のデータを上書きして復元する？元に戻せないよ。")) return;
+        Object.entries(parsed.data).forEach(([key, value]) => {
+          if (ALL_STORAGE_KEYS.includes(key)) localStorage.setItem(key, value);
+        });
+        window.alert("復元したよ。アプリを再読み込みするね。");
+        window.location.reload();
+      } catch {
+        window.alert("ファイルの読み込みに失敗したよ。正しいバックアップファイルか確認してね。");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
 
   const handleShare = async () => {
     try {
@@ -1903,6 +1961,48 @@ export default function StudyApp() {
               <button onClick={handleShare} style={smallLinkButtonStyle(d.accent, true)}>
                 📤 進捗をシェア
               </button>
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #E5E2DC" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 4 }}>💾 データのバックアップ</div>
+              <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
+                定期的に書き出しておくと、機種変更やアプリの再インストールでも復元できるよ。
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={handleExportBackup}
+                  style={{
+                    flex: 1,
+                    padding: "10px 0",
+                    borderRadius: 8,
+                    border: "1px solid #E5E2DC",
+                    background: "transparent",
+                    color: "#434842",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  ⬇️ 書き出す
+                </button>
+                <button
+                  onClick={handleImportClick}
+                  style={{
+                    flex: 1,
+                    padding: "10px 0",
+                    borderRadius: 8,
+                    border: "1px solid #E5E2DC",
+                    background: "transparent",
+                    color: "#434842",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  ⬆️ 読み込む
+                </button>
+              </div>
+              <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} style={{ display: "none" }} />
             </div>
           </div>
         )}
