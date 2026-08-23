@@ -853,10 +853,10 @@ export default function StudyApp() {
       });
       canvas.toBlob(async (blob) => {
         if (!blob) return;
-        const file = new File([blob], `study-srs-${domain}-${todayStr()}.png`, { type: "image/png" });
+        const file = new File([blob], `ippo-${domain}-${todayStr()}.png`, { type: "image/png" });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
-            await navigator.share({ files: [file], title: "study-srs 進捗" });
+            await navigator.share({ files: [file], title: "いっぽ 進捗" });
             return;
           } catch {
             // user cancelled the share sheet; fall back to download below
@@ -898,7 +898,7 @@ export default function StudyApp() {
           position: "absolute",
           top: 18,
           left: 24,
-          fontSize: 11,
+          fontSize: 12,
           letterSpacing: "0.08em",
           textTransform: "uppercase",
           color: d.accent,
@@ -946,14 +946,14 @@ export default function StudyApp() {
           </div>
         ) : schema === "wine" ? (
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, lineHeight: 1.5, marginBottom: 8 }}>
+            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 20, lineHeight: 1.5, marginBottom: 8 }}>
               {current.q}
             </div>
             <div style={{ fontSize: 12, color: "#747872", marginTop: 16 }}>タップして解答を確認</div>
           </div>
         ) : (
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 22, fontWeight: 600, lineHeight: 1.5 }}>
+            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 22, fontWeight: 600, lineHeight: 1.5 }}>
               {current.front}
             </div>
             <div style={{ fontSize: 12, color: "#747872", marginTop: 16 }}>タップして裏面を確認</div>
@@ -962,7 +962,7 @@ export default function StudyApp() {
       ) : schema === "korean" ? (
         <div>
           <div style={{ fontSize: 13, color: "#747872", marginBottom: 4 }}>{current.romanized}</div>
-          <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 24, fontWeight: 600, marginBottom: 14 }}>
+          <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 24, fontWeight: 600, marginBottom: 14 }}>
             {current.meaning}
           </div>
           <div
@@ -972,36 +972,36 @@ export default function StudyApp() {
               padding: "12px 14px",
               fontSize: 13,
               lineHeight: 1.6,
-              color: "#3A3630",
+              color: "#1a1c1b",
             }}
           >
             <span style={{ fontWeight: 700, color: d.accent }}>発音ルール　</span>
             {current.rule}
           </div>
           {current.source && (
-            <div style={{ fontSize: 11, color: "#747872", marginTop: 10 }}>📎 {current.source}</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 10 }}>📎 {current.source}</div>
           )}
         </div>
       ) : schema === "wine" ? (
         <div>
-          <div style={{ fontSize: 11, color: d.accent, fontWeight: 600, marginBottom: 6 }}>{current.topic}</div>
-          <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 19, fontWeight: 600, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: d.accent, fontWeight: 600, marginBottom: 6 }}>{current.topic}</div>
+          <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 19, fontWeight: 600, lineHeight: 1.5 }}>
             {current.a}
           </div>
           {current.hypothesis && (
             <div style={{ fontSize: 12, color: "#747872", marginTop: 10 }}>💭 最初の仮説: {current.hypothesis}</div>
           )}
           {current.source && (
-            <div style={{ fontSize: 11, color: "#747872", marginTop: 6 }}>📎 {current.source}</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 6 }}>📎 {current.source}</div>
           )}
         </div>
       ) : (
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, fontWeight: 600, lineHeight: 1.5, marginBottom: 10 }}>
+          <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 20, fontWeight: 600, lineHeight: 1.5, marginBottom: 10 }}>
             {current.back}
           </div>
           {current.source && (
-            <div style={{ fontSize: 11, color: "#747872", marginTop: 6 }}>📎 {current.source}</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 6 }}>📎 {current.source}</div>
           )}
         </div>
       )}
@@ -1051,7 +1051,7 @@ export default function StudyApp() {
               color: "#1a1c1b",
             }}
           >
-            Sena's Study Deck
+            いっぽ
           </h1>
           <div
             style={{
@@ -1122,7 +1122,7 @@ export default function StudyApp() {
                   borderRadius: 8,
                   border: "none",
                   background: "#E8A93C",
-                  color: "#2B2620",
+                  color: "#1a1c1b",
                   fontWeight: 700,
                   fontSize: 14,
                   cursor: "pointer",
@@ -1224,7 +1224,7 @@ export default function StudyApp() {
                     width: 32,
                     height: 32,
                     borderRadius: "50%",
-                    border: deckForm.colorIdx === i ? "2px solid #2B2620" : "1px solid #E5E2DC",
+                    border: deckForm.colorIdx === i ? "2px solid #1a1c1b" : "1px solid #E5E2DC",
                     background: c.accent,
                     cursor: "pointer",
                   }}
@@ -1342,7 +1342,7 @@ export default function StudyApp() {
                   <div style={{ height: 6, background: "#e9e2d4", borderRadius: 3, overflow: "hidden" }}>
                     <div style={{ height: "100%", width: `${pct}%`, background: val.accent }} />
                   </div>
-                  <div style={{ fontSize: 11, color: "#747872" }}>
+                  <div style={{ fontSize: 12, color: "#747872" }}>
                     {total > 0 ? `${mastered}/${total} 定着・${pct}%` : "カードなし"}
                   </div>
                 </div>
@@ -1661,7 +1661,7 @@ export default function StudyApp() {
                   >
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: 13 }}>{x.name}</div>
-                      <div style={{ fontSize: 11, color: "#747872", marginTop: 2 }}>
+                      <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>
                         全{x.totalUnits} ・ {x.completedAt.replaceAll("-", "/")}に読了
                       </div>
                     </div>
@@ -1694,13 +1694,13 @@ export default function StudyApp() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
               <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 14, border: "1px solid #E5E2DC", textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: "#747872", marginBottom: 4 }}>連続学習日数</div>
+                <div style={{ fontSize: 12, color: "#747872", marginBottom: 4 }}>連続学習日数</div>
                 <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 22, color: "#4e604f" }}>
                   🔥 {streak}
                 </div>
               </div>
               <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 14, border: "1px solid #E5E2DC", textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: "#747872", marginBottom: 4 }}>全デッキ定着</div>
+                <div style={{ fontSize: 12, color: "#747872", marginBottom: 4 }}>全デッキ定着</div>
                 <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 22, color: "#4e604f" }}>
                   {totalMasteredAll}/{totalCardsAll}
                 </div>
@@ -1710,7 +1710,7 @@ export default function StudyApp() {
             <div
               style={{
                 textAlign: "center",
-                fontSize: 11,
+                fontSize: 12,
                 color: "#747872",
                 marginBottom: 14,
                 lineHeight: 1.7,
@@ -1924,12 +1924,12 @@ export default function StudyApp() {
                           {schema === "korean" ? c.meaning : schema === "wine" ? c.a : c.back}
                         </div>
                         {schema === "wine" && c.hypothesis && (
-                          <div style={{ fontSize: 11, color: "#747872", marginTop: 2 }}>💭 仮説: {c.hypothesis}</div>
+                          <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>💭 仮説: {c.hypothesis}</div>
                         )}
                         {c.source && (
-                          <div style={{ fontSize: 11, color: "#747872", marginTop: 2 }}>📎 {c.source}</div>
+                          <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>📎 {c.source}</div>
                         )}
-                        <div style={{ fontSize: 11, color: d.accent, marginTop: 4 }}>
+                        <div style={{ fontSize: 12, color: d.accent, marginTop: 4 }}>
                           Box {c.box}・{c.correct}/{c.seen} 正解・次回 {dueLabel(c.dueAt)}
                         </div>
                         <div style={{ fontSize: 10, color: "#B4AC9C", marginTop: 2 }}>
@@ -2208,8 +2208,8 @@ export default function StudyApp() {
                 gap: 10,
               }}
             >
-              <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 18, fontWeight: 600 }}>テスト結果</div>
-              <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 36, fontWeight: 700, color: d.accent }}>
+              <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 18, fontWeight: 600 }}>テスト結果</div>
+              <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 36, fontWeight: 700, color: d.accent }}>
                 {testScore} / {testQueue.length}
               </div>
               <div style={{ fontSize: 13, color: "#434842" }}>
@@ -2253,7 +2253,7 @@ export default function StudyApp() {
               gap: 10,
             }}
           >
-            <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 18, fontWeight: 600 }}>
+            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 18, fontWeight: 600 }}>
               カードがまだないよ
             </div>
             <div style={{ fontSize: 13, color: "#434842" }}>「＋追加」から{d.label}のカードを登録してみて。</div>
@@ -2274,7 +2274,7 @@ export default function StudyApp() {
               gap: 14,
             }}
           >
-            <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, fontWeight: 600 }}>
+            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 20, fontWeight: 600 }}>
               今日の復習は終わったよ
             </div>
             <div style={{ fontSize: 13, color: "#434842" }}>
@@ -2317,7 +2317,7 @@ export default function StudyApp() {
               gap: 14,
             }}
           >
-            <div style={{ fontFamily: "'IBM Plex Serif', serif", fontSize: 20, fontWeight: 600 }}>
+            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 20, fontWeight: 600 }}>
               {d.label}セット終了
             </div>
             <div style={{ fontSize: 13, color: "#434842" }}>
@@ -2391,7 +2391,7 @@ export default function StudyApp() {
         )}
 
         {/* Box legend */}
-        <div style={{ marginTop: 22, fontSize: 11, color: "#747872", textAlign: "center", lineHeight: 1.6 }}>
+        <div style={{ marginTop: 22, fontSize: 12, color: "#747872", textAlign: "center", lineHeight: 1.6 }}>
           {testMode ? (
             "テストの結果はBoxや復習日には影響しないよ（力試し用）。"
           ) : (
@@ -2443,7 +2443,7 @@ export default function StudyApp() {
                   background: "transparent",
                   color: active ? "#E8A93C" : "#747872",
                   cursor: "pointer",
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   padding: "4px 12px",
                 }}
@@ -2502,7 +2502,7 @@ async function generateShareImage({ domainLabel, accent, accentSoft, streak, wee
     else ctx.rect(x, y, w, h);
   };
 
-  ctx.fillStyle = "#EFEAE1";
+  ctx.fillStyle = "#faf9f7";
   ctx.fillRect(0, 0, W, H);
 
   ctx.fillStyle = "#FFFFFF";
@@ -2512,22 +2512,22 @@ async function generateShareImage({ domainLabel, accent, accentSoft, streak, wee
   ctx.textAlign = "center";
   let y = pad + 60;
 
-  ctx.fillStyle = "#8A8072";
-  ctx.font = 'italic 600 18px "IBM Plex Serif", serif';
+  ctx.fillStyle = "#747872";
+  ctx.font = '600 18px "Nunito Sans", sans-serif';
   ctx.fillText("積み上げ復習", cx, y);
   y += 44;
 
-  ctx.fillStyle = "#2B2620";
-  ctx.font = '700 32px "IBM Plex Serif", serif';
+  ctx.fillStyle = "#1a1c1b";
+  ctx.font = '700 32px "Nunito Sans", sans-serif';
   ctx.fillText(`${domainLabel}の記録`, cx, y);
   y += 100;
 
   ctx.fillStyle = accent;
-  ctx.font = '700 96px "IBM Plex Serif", serif';
+  ctx.font = '700 96px "Nunito Sans", sans-serif';
   ctx.fillText(`🔥 ${streak}`, cx, y);
   y += 36;
   ctx.fillStyle = "#434842";
-  ctx.font = '600 20px "IBM Plex Sans", sans-serif';
+  ctx.font = '600 20px "Nunito Sans", sans-serif';
   ctx.fillText("連続学習日数", cx, y);
   y += 60;
 
@@ -2535,15 +2535,15 @@ async function generateShareImage({ domainLabel, accent, accentSoft, streak, wee
   roundedRect(pad + 24, y - 36, W - (pad + 24) * 2, 88, 16);
   ctx.fill();
   ctx.fillStyle = accent;
-  ctx.font = '700 24px "IBM Plex Sans", sans-serif';
+  ctx.font = '700 24px "Nunito Sans", sans-serif';
   ctx.fillText(`定着 ${totalMastered} / ${totalCards} 枚`, cx, y + 4);
   ctx.fillStyle = "#434842";
-  ctx.font = '500 15px "IBM Plex Sans", sans-serif';
+  ctx.font = '500 15px "Nunito Sans", sans-serif';
   ctx.fillText(`今週 +${weeklyMastered}枚`, cx, y + 30);
   y += 100;
 
   ctx.fillStyle = "#434842";
-  ctx.font = '600 14px "IBM Plex Sans", sans-serif';
+  ctx.font = '600 14px "Nunito Sans", sans-serif';
   ctx.fillText("直近12週間の学習記録", cx, y);
   y += 22;
 
@@ -2561,7 +2561,7 @@ async function generateShareImage({ domainLabel, accent, accentSoft, streak, wee
   y += 7 * (cell + gap) + 36;
 
   ctx.fillStyle = "#747872";
-  ctx.font = '500 14px "IBM Plex Sans", sans-serif';
+  ctx.font = '500 14px "Nunito Sans", sans-serif';
   ctx.fillText(todayStr(), cx, H - pad - 30);
 
   return canvas;

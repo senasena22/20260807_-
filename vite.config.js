@@ -11,15 +11,15 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
-        name: "Sena's Study Deck",
-        short_name: '積み上げ復習',
-        description: '韓国語とワイン試験のSRS(間隔反復)復習アプリ',
+        name: 'いっぽ',
+        short_name: 'いっぽ',
+        description: '毎日ひとつずつ積み上げるSRS(間隔反復)復習アプリ',
         lang: 'ja',
         start_url: '.',
         scope: '.',
         display: 'standalone',
-        background_color: '#EFEAE1',
-        theme_color: '#EFEAE1',
+        background_color: '#faf9f7',
+        theme_color: '#faf9f7',
         icons: [
           {
             src: 'pwa-192x192.png',
