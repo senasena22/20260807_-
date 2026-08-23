@@ -51,6 +51,7 @@ const STATS_STORAGE_KEY = "study-srs.stats.v1";
 const EXAM_DATES_STORAGE_KEY = "study-srs.examDates.v1";
 const MATERIALS_STORAGE_KEY = "study-srs.materials.v1";
 const POINTS_STORAGE_KEY = "study-srs.points.v1";
+const COMPLETED_MATERIALS_STORAGE_KEY = "study-srs.completedMaterials.v1";
 
 // days until next review after each successful box level (box 1〜5)
 const INTERVALS_DAYS = [1, 3, 7, 16, 30];
@@ -111,6 +112,17 @@ function loadDecks() {
     return parsed;
   } catch {
     return BUILTIN_DECKS;
+  }
+}
+
+function loadCompletedMaterials() {
+  try {
+    const raw = localStorage.getItem(COMPLETED_MATERIALS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
 }
 
@@ -306,6 +318,7 @@ export default function StudyApp() {
   const [materials, setMaterials] = useState(loadMaterials);
   const [editingMaterial, setEditingMaterial] = useState(false);
   const [materialForm, setMaterialForm] = useState({ name: "", totalUnits: "", currentUnit: "", daysPerUnit: "" });
+  const [completedMaterials, setCompletedMaterials] = useState(loadCompletedMaterials);
 
   useEffect(() => {
     localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
@@ -330,6 +343,10 @@ export default function StudyApp() {
   useEffect(() => {
     localStorage.setItem(DECKS_STORAGE_KEY, JSON.stringify(decks));
   }, [decks]);
+
+  useEffect(() => {
+    localStorage.setItem(COMPLETED_MATERIALS_STORAGE_KEY, JSON.stringify(completedMaterials));
+  }, [completedMaterials]);
 
   useEffect(() => {
     localStorage.setItem(POINTS_STORAGE_KEY, JSON.stringify(points));
@@ -762,6 +779,20 @@ export default function StudyApp() {
   const clearMaterial = () => {
     setMaterials((prev) => ({ ...prev, [domain]: null }));
     setEditingMaterial(false);
+  };
+
+  const markMaterialComplete = () => {
+    const m = materials[domain];
+    if (!m) return;
+    setCompletedMaterials((prev) => [
+      ...prev,
+      { id: newCardId(), deckKey: domain, deckLabel: d.label, name: m.name, totalUnits: m.totalUnits, completedAt: todayStr() },
+    ]);
+    setMaterials((prev) => ({ ...prev, [domain]: null }));
+  };
+
+  const deleteCompletedMaterial = (id) => {
+    setCompletedMaterials((prev) => prev.filter((x) => x.id !== id));
   };
 
   const bumpMaterialProgress = (delta) => {
@@ -1386,6 +1417,25 @@ export default function StudyApp() {
                 ) : (
                   <div style={{ fontSize: 12, color: d.accent, fontWeight: 600, marginTop: 10 }}>一周完了です！🎉</div>
                 )}
+                {materialRemaining === 0 && (
+                  <button
+                    onClick={markMaterialComplete}
+                    style={{
+                      marginTop: 10,
+                      width: "100%",
+                      padding: "8px 0",
+                      borderRadius: 8,
+                      border: "none",
+                      background: d.accent,
+                      color: "#fff",
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: "pointer",
+                    }}
+                  >
+                    📚 読了リストに追加する
+                  </button>
+                )}
                 {materialRemaining > 0 && examDaysLeft !== null && (
                   <div
                     style={{
@@ -1441,6 +1491,54 @@ export default function StudyApp() {
                 📖 教材を登録する
               </button>
             )}
+          </div>
+        )}
+
+        {/* Completed materials list */}
+        {page === "plan" && completedMaterials.some((x) => x.deckKey === domain) && (
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 14,
+              border: `1px solid ${d.accentSoft}`,
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#434842", marginBottom: 10 }}>📚 読了リスト</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {completedMaterials
+                .filter((x) => x.deckKey === domain)
+                .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
+                .map((x) => (
+                  <div
+                    key={x.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      background: "#F7F4EE",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{x.name}</div>
+                      <div style={{ fontSize: 11, color: "#747872", marginTop: 2 }}>
+                        全{x.totalUnits} ・ {x.completedAt.replaceAll("-", "/")}に読了
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => deleteCompletedMaterial(x.id)}
+                      aria-label="読了記録を削除"
+                      style={{ border: "none", background: "transparent", color: "#B0483A", cursor: "pointer", padding: 4, flexShrink: 0 }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+            </div>
           </div>
         )}
 
