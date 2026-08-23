@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, User } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -314,7 +314,7 @@ export default function StudyApp() {
 
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const [page, setPage] = useState("review");
+  const [page, setPage] = useState("home");
   const [materials, setMaterials] = useState(loadMaterials);
   const [editingMaterial, setEditingMaterial] = useState(false);
   const [materialForm, setMaterialForm] = useState({ name: "", totalUnits: "", currentUnit: "", daysPerUnit: "" });
@@ -572,6 +572,17 @@ export default function StudyApp() {
   const current = testMode ? deck[testQueue[testIdx]] : deck[sessionQueue[queueIdx]];
   const d = decks.find((x) => x.key === domain) || decks[0];
   const schema = d.schema;
+  const DIcon = DECK_ICONS[d.iconKey] || BookOpen;
+  const openDeckReview = (key) => {
+    switchDomain(key);
+    setPage("review");
+  };
+  const deckTotalCards = (key) => Object.values(deck).filter((c) => c.domain === key).length;
+  const deckMasteredCards = (key) => Object.values(deck).filter((c) => c.domain === key && c.box >= MASTERY_BOX).length;
+  const todayDueAcrossDecks = decks.reduce(
+    (sum, dk) => sum + buildSessionQueue(deck, dk.key).length,
+    0
+  );
 
   const speak = (text) => {
     if (!window.speechSynthesis) return;
@@ -815,8 +826,11 @@ export default function StudyApp() {
   const streak = computeStreak(stats.studyDates);
   const weekStart = addDaysStr(todayStr(), -6);
   const weeklyMastered = stats.masteredEvents.filter((e) => e.domain === domain && e.date >= weekStart).length;
-  const lastTest = [...stats.testHistory].reverse().find((t) => t.domain === domain);
   const calendarDays = useMemo(() => buildCalendarDays(stats.studyDates), [stats.studyDates]);
+  const weeklyMasteredAll = stats.masteredEvents.filter((e) => e.date >= weekStart).length;
+  const lastTestAll = [...stats.testHistory].reverse()[0];
+  const totalCardsAll = Object.keys(deck).length;
+  const totalMasteredAll = Object.values(deck).filter((c) => c.box >= MASTERY_BOX).length;
 
   const material = materials[domain];
   const materialRemaining = material ? Math.max(0, material.totalUnits - material.currentUnit) : 0;
@@ -1004,7 +1018,7 @@ export default function StudyApp() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "32px 16px 60px",
+        padding: page === "review" ? "32px 16px 60px" : "32px 16px 90px",
       }}
     >
       <link
@@ -1058,61 +1072,113 @@ export default function StudyApp() {
           </div>
         </div>
 
-        {/* Domain tabs */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
-          {decks.map((val) => {
-            const active = val.key === domain;
-            const TIcon = DECK_ICONS[val.iconKey] || BookOpen;
-            return (
+        {/* Home */}
+        {page === "home" && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 22, marginBottom: 6 }}>
+              こんにちは！
+            </div>
+            <div style={{ fontSize: 13, color: "#434842", marginBottom: 20, lineHeight: 1.6 }}>
+              今日も一歩ずつ進んでいきましょう。あなたのペースで大丈夫だよ。
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 18, border: "1px solid #E5E2DC", marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 6 }}>今日の目標</div>
+              <div style={{ fontSize: 13, color: "#747872" }}>
+                {todayDueAcrossDecks > 0 ? `今日は${todayDueAcrossDecks}枚の復習があるよ` : "今日の復習はもう終わってるよ、えらい！"}
+              </div>
+            </div>
+
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 10 }}>学習の続きから</div>
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 18, border: "1px solid #E5E2DC", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 10,
+                    background: d.accentSoft,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: d.accent,
+                    flexShrink: 0,
+                  }}
+                >
+                  <DIcon size={22} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>{d.label}</div>
+                  <div style={{ fontSize: 12, color: "#747872" }}>
+                    定着 {deckMasteredCards(domain)}/{deckTotalCards(domain)}枚
+                  </div>
+                </div>
+              </div>
               <button
-                key={val.key}
-                onClick={() => switchDomain(val.key)}
+                onClick={() => setPage("review")}
                 style={{
-                  flex: "0 0 auto",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  padding: "12px 16px",
+                  width: "100%",
+                  padding: "12px 0",
                   borderRadius: 8,
-                  border: active ? `2px solid ${val.accent}` : "2px solid transparent",
-                  background: active ? val.accentSoft : "#e9e2d4",
-                  color: active ? val.accent : "#434842",
-                  fontWeight: 600,
+                  border: "none",
+                  background: "#E8A93C",
+                  color: "#2B2620",
+                  fontWeight: 700,
                   fontSize: 14,
                   cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  transition: "all 0.15s ease",
                 }}
               >
-                <TIcon size={16} />
-                {val.label}
+                学習を続ける
               </button>
-            );
-          })}
-          <button
-            onClick={() => (showDeckForm ? setShowDeckForm(false) : openDeckForm())}
-            style={{
-              flex: "0 0 auto",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-              padding: "12px 14px",
-              borderRadius: 8,
-              border: "1.5px dashed #747872",
-              background: "transparent",
-              color: "#434842",
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <Plus size={16} />
-            デッキ
-          </button>
-        </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => {
+                  setPage("library");
+                  openDeckForm();
+                }}
+                style={{
+                  flex: 1,
+                  padding: "12px 0",
+                  borderRadius: 8,
+                  border: "1px solid #E5E2DC",
+                  background: "#FFFFFF",
+                  color: "#434842",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                ＋ 新しいデッキ
+              </button>
+              <button
+                onClick={() => setPage("goals")}
+                style={{
+                  flex: 1,
+                  padding: "12px 0",
+                  borderRadius: 8,
+                  border: "1px solid #E5E2DC",
+                  background: "#FFFFFF",
+                  color: "#434842",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                🗓 目標を見る
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Library */}
+        {page === "library" && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 22, marginBottom: 6 }}>
+            マイライブラリ
+          </div>
+          <div style={{ fontSize: 13, color: "#434842", marginBottom: 16 }}>その調子で頑張ろう！</div>
 
         {showDeckForm && (
           <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, marginBottom: 20, border: "1px solid #E5E2DC" }}>
@@ -1223,56 +1289,126 @@ export default function StudyApp() {
           </div>
         )}
 
-        {/* Page nav */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-          <button
-            onClick={() => setPage("review")}
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              padding: "10px 10px",
-              borderRadius: 8,
-              border: page === "review" ? `2px solid ${d.accent}` : "2px solid transparent",
-              background: page === "review" ? d.accentSoft : "#e9e2d4",
-              color: page === "review" ? d.accent : "#434842",
-              fontWeight: 600,
-              fontSize: 13,
-              cursor: "pointer",
-            }}
-          >
-            📚 復習
-          </button>
-          <button
-            onClick={() => {
-              setPage("plan");
-              setTestMode(false);
-              setTestDone(false);
-            }}
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              padding: "10px 10px",
-              borderRadius: 8,
-              border: page === "plan" ? `2px solid ${d.accent}` : "2px solid transparent",
-              background: page === "plan" ? d.accentSoft : "#e9e2d4",
-              color: page === "plan" ? d.accent : "#434842",
-              fontWeight: 600,
-              fontSize: 13,
-              cursor: "pointer",
-            }}
-          >
-            🗓️ 計画
-          </button>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {decks.map((val) => {
+              const TIcon = DECK_ICONS[val.iconKey] || BookOpen;
+              const total = deckTotalCards(val.key);
+              const mastered = deckMasteredCards(val.key);
+              const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+              return (
+                <div
+                  key={val.key}
+                  onClick={() => openDeckReview(val.key)}
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #E5E2DC",
+                    borderRadius: 16,
+                    padding: 14,
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 10,
+                        background: val.accentSoft,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: val.accent,
+                      }}
+                    >
+                      <TIcon size={20} />
+                    </div>
+                    {!val.builtin && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteDeck(val.key);
+                        }}
+                        aria-label="デッキを削除"
+                        style={{ border: "none", background: "transparent", color: "#B0483A", cursor: "pointer", padding: 2 }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{val.label}</div>
+                  <div style={{ height: 6, background: "#e9e2d4", borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${pct}%`, background: val.accent }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: "#747872" }}>
+                    {total > 0 ? `${mastered}/${total} 定着・${pct}%` : "カードなし"}
+                  </div>
+                </div>
+              );
+            })}
+            <div
+              onClick={openDeckForm}
+              style={{
+                border: "1.5px dashed #747872",
+                borderRadius: 16,
+                background: "transparent",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                padding: 20,
+                cursor: "pointer",
+                color: "#434842",
+                minHeight: 120,
+              }}
+            >
+              <Plus size={20} />
+              <span style={{ fontSize: 13, fontWeight: 600 }}>新しいデッキ</span>
+            </div>
+          </div>
         </div>
+        )}
+
+        {/* Goals deck switcher */}
+        {page === "goals" && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+            {decks.map((val) => {
+              const active = val.key === domain;
+              const TIcon = DECK_ICONS[val.iconKey] || BookOpen;
+              return (
+                <button
+                  key={val.key}
+                  onClick={() => switchDomain(val.key)}
+                  style={{
+                    flex: "0 0 auto",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    padding: "8px 14px",
+                    borderRadius: 999,
+                    border: active ? `2px solid ${val.accent}` : "1px solid #E5E2DC",
+                    background: active ? val.accentSoft : "#FFFFFF",
+                    color: active ? val.accent : "#434842",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <TIcon size={14} />
+                  {val.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Exam countdown */}
-        {page === "plan" && (
+        {page === "goals" && (
           <div style={{ textAlign: "center", marginBottom: 10 }}>
             {editingExamDate ? (
               <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
@@ -1312,7 +1448,7 @@ export default function StudyApp() {
         )}
 
         {/* Material progress */}
-        {page === "plan" && (
+        {page === "goals" && (
           <div
             style={{
               background: "#FFFFFF",
@@ -1495,7 +1631,7 @@ export default function StudyApp() {
         )}
 
         {/* Completed materials list */}
-        {page === "plan" && completedMaterials.some((x) => x.deckKey === domain) && (
+        {page === "goals" && completedMaterials.some((x) => x.deckKey === domain) && (
           <div
             style={{
               background: "#FFFFFF",
@@ -1542,42 +1678,66 @@ export default function StudyApp() {
           </div>
         )}
 
-        {/* Stats strip */}
-        {page === "plan" && (
-          <div
-            style={{
-              textAlign: "center",
-              fontSize: 11,
-              color: "#747872",
-              marginBottom: 14,
-              lineHeight: 1.7,
-            }}
-          >
-            <div>
-              🔥 連続{streak}日　定着 今週+{weeklyMastered}枚
+        {/* Profile */}
+        {page === "profile" && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 22, marginBottom: 16 }}>
+              プロフィール
             </div>
-            {lastTest && (
-              <div>
-                前回テスト {Math.round((lastTest.correct / lastTest.total) * 100)}%（{lastTest.correct}/{lastTest.total}）・
-                {dueLabel(lastTest.date) === "今日" ? "今日" : lastTest.date}
+
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 18, border: "1px solid #E5E2DC", marginBottom: 14, textAlign: "center" }}>
+              <div style={{ fontSize: 12, color: "#747872", marginBottom: 4 }}>累計ポイント</div>
+              <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 36, color: "#E8A93C" }}>
+                ✦ {points.total.toLocaleString()}
               </div>
-            )}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+              <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 14, border: "1px solid #E5E2DC", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#747872", marginBottom: 4 }}>連続学習日数</div>
+                <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 22, color: "#4e604f" }}>
+                  🔥 {streak}
+                </div>
+              </div>
+              <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 14, border: "1px solid #E5E2DC", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#747872", marginBottom: 4 }}>全デッキ定着</div>
+                <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 22, color: "#4e604f" }}>
+                  {totalMasteredAll}/{totalCardsAll}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: 11,
+                color: "#747872",
+                marginBottom: 14,
+                lineHeight: 1.7,
+              }}
+            >
+              <div>今週の新規定着 +{weeklyMasteredAll}枚</div>
+              {lastTestAll && (
+                <div>
+                  前回テスト（{decks.find((x) => x.key === lastTestAll.domain)?.label || lastTestAll.domain}）
+                  {Math.round((lastTestAll.correct / lastTestAll.total) * 100)}%（{lastTestAll.correct}/{lastTestAll.total}）・
+                  {dueLabel(lastTestAll.date) === "今日" ? "今日" : lastTestAll.date}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 14 }}>
+              <button onClick={() => setShowCalendar((v) => !v)} style={smallLinkButtonStyle(d.accent, true)}>
+                📅 {showCalendar ? "カレンダーを閉じる" : "カレンダー"}
+              </button>
+              <button onClick={handleShare} style={smallLinkButtonStyle(d.accent, true)}>
+                📤 {d.label}の進捗をシェア
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Calendar / share */}
-        {page === "plan" && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 14 }}>
-            <button onClick={() => setShowCalendar((v) => !v)} style={smallLinkButtonStyle(d.accent, true)}>
-              📅 {showCalendar ? "カレンダーを閉じる" : "カレンダー"}
-            </button>
-            <button onClick={handleShare} style={smallLinkButtonStyle(d.accent, true)}>
-              📤 進捗をシェア
-            </button>
-          </div>
-        )}
-
-        {page === "plan" && showCalendar && (
+        {page === "profile" && showCalendar && (
           <div
             style={{
               background: "#FFFFFF",
@@ -1617,6 +1777,23 @@ export default function StudyApp() {
 
         {page === "review" && (
         <>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <button
+            onClick={() => {
+              cancelTest();
+              setPage("library");
+            }}
+            aria-label="閉じる"
+            style={{ border: "none", background: "transparent", color: "#434842", cursor: "pointer", padding: 4, display: "flex" }}
+          >
+            <X size={20} />
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 15, color: d.accent }}>
+            <DIcon size={16} />
+            {d.label}
+          </div>
+          <div style={{ width: 28 }} />
+        </div>
         {/* Add today's learning */}
         {!testMode && (
         <div style={{ marginBottom: 20 }}>
@@ -2230,6 +2407,54 @@ export default function StudyApp() {
         </>
         )}
       </div>
+
+      {page !== "review" && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: "#FFFFFF",
+            borderTop: "1px solid #E5E2DC",
+            display: "flex",
+            justifyContent: "space-around",
+            padding: "8px 0 calc(8px + env(safe-area-inset-bottom))",
+            zIndex: 10,
+          }}
+        >
+          {[
+            { key: "home", label: "ホーム", Icon: Home },
+            { key: "library", label: "ライブラリ", Icon: Library },
+            { key: "goals", label: "目標", Icon: Target },
+            { key: "profile", label: "プロフィール", Icon: User },
+          ].map(({ key, label, Icon }) => {
+            const active = page === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setPage(key)}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 2,
+                  border: "none",
+                  background: "transparent",
+                  color: active ? "#E8A93C" : "#747872",
+                  cursor: "pointer",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  padding: "4px 12px",
+                }}
+              >
+                <Icon size={20} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
