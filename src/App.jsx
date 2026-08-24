@@ -1952,6 +1952,14 @@ export default function StudyApp() {
           </div>
         )}
 
+        {page === "goals" && (
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+            <button onClick={() => setShowCalendar((v) => !v)} style={smallLinkButtonStyle(d.accent, true)}>
+              📅 {showCalendar ? "カレンダーを閉じる" : "学習カレンダー"}
+            </button>
+          </div>
+        )}
+
         {/* Report */}
         {page === "report" && (
           <div style={{ marginBottom: 24 }}>
@@ -2054,10 +2062,7 @@ export default function StudyApp() {
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 14 }}>
-              <button onClick={() => setShowCalendar((v) => !v)} style={smallLinkButtonStyle(d.accent, true)}>
-                📅 {showCalendar ? "カレンダーを閉じる" : "学習カレンダー"}
-              </button>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
               <button onClick={handleShare} style={smallLinkButtonStyle(d.accent, true)}>
                 📤 進捗をシェア
               </button>
@@ -2107,7 +2112,7 @@ export default function StudyApp() {
           </div>
         )}
 
-        {page === "home" && showCalendar && (
+        {page === "goals" && showCalendar && (
           <div
             style={{
               background: "#FFFFFF",
