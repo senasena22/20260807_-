@@ -1296,6 +1296,24 @@ export default function StudyApp() {
               </div>
             </div>
 
+            <a
+              href="https://www.amazon.co.jp/s?i=digital-text"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "block",
+                textAlign: "center",
+                marginTop: -8,
+                marginBottom: 16,
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#E8A93C",
+                textDecoration: "none",
+              }}
+            >
+              🎁 Kindleストアで使ってみる
+            </a>
+
             <div
               onClick={todayDueAcrossDecks > 0 ? goToTodayGoal : undefined}
               style={{
