@@ -338,7 +338,6 @@ export default function StudyApp() {
   const [editingExamDate, setEditingExamDate] = useState(false);
   const [examDateInput, setExamDateInput] = useState("");
 
-  const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() };
@@ -1932,13 +1931,6 @@ export default function StudyApp() {
           </div>
         )}
 
-        {page === "goals" && (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-            <button onClick={() => setShowCalendar((v) => !v)} style={smallLinkButtonStyle(d.accent, true)}>
-              📅 {showCalendar ? "カレンダーを閉じる" : "学習カレンダー"}
-            </button>
-          </div>
-        )}
 
         {/* Report */}
         {page === "report" && (
@@ -2092,7 +2084,7 @@ export default function StudyApp() {
           </div>
         )}
 
-        {page === "goals" && showCalendar && (
+        {page === "goals" && (
           <div
             style={{
               background: "#FFFFFF",
