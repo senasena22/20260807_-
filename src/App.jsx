@@ -2542,7 +2542,7 @@ export default function StudyApp() {
                       </option>
                     ))}
                   </select>
-                  <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <ImagePickerField
                       label="表面の画像（任意）"
                       value={koreanForm.frontImage}
@@ -2599,7 +2599,7 @@ export default function StudyApp() {
                       </option>
                     ))}
                   </select>
-                  <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <ImagePickerField
                       label="表面の画像（任意）"
                       value={wineForm.frontImage}
@@ -2632,7 +2632,7 @@ export default function StudyApp() {
                     placeholder="出典・メモ（任意）"
                     style={inputStyle}
                   />
-                  <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <ImagePickerField
                       label="表面の画像（任意）"
                       value={genericForm.frontImage}
