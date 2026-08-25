@@ -299,9 +299,87 @@ function shuffle(arr) {
   return a;
 }
 
-const EMPTY_KOREAN_FORM = { ko: "", romanized: "", meaning: "", rule: "", source: "" };
-const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "", hypothesis: "", source: "" };
-const EMPTY_GENERIC_FORM = { front: "", back: "", source: "" };
+const EMPTY_KOREAN_FORM = { ko: "", romanized: "", meaning: "", rule: "", source: "", frontImage: "", backImage: "" };
+const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "", hypothesis: "", source: "", frontImage: "", backImage: "" };
+const EMPTY_GENERIC_FORM = { front: "", back: "", source: "", frontImage: "", backImage: "" };
+
+const CARD_IMAGE_MAX_DIMENSION = 640;
+const CARD_IMAGE_QUALITY = 0.72;
+
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("画像を読み込めなかったよ"));
+      img.onload = () => {
+        const scale = Math.min(1, CARD_IMAGE_MAX_DIMENSION / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", CARD_IMAGE_QUALITY));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function ImagePickerField({ label, value, onChange }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, color: "#747872", marginBottom: 4 }}>{label}</div>
+      {value ? (
+        <div style={{ position: "relative", display: "inline-block" }}>
+          <img src={value} alt="" style={{ maxWidth: 120, maxHeight: 120, borderRadius: 8, display: "block", objectFit: "cover" }} />
+          <button
+            onClick={() => onChange("")}
+            aria-label="画像を削除"
+            style={{
+              position: "absolute",
+              top: -8,
+              right: -8,
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              border: "none",
+              background: "#B0483A",
+              color: "#fff",
+              cursor: "pointer",
+              fontSize: 12,
+              lineHeight: "22px",
+              padding: 0,
+            }}
+          >
+            ×
+          </button>
+        </div>
+      ) : (
+        <input
+          type="file"
+          accept="image/*"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            try {
+              const dataUrl = await compressImageFile(file);
+              onChange(dataUrl);
+            } catch {
+              window.alert("画像の読み込みに失敗したよ。もう一度試してみて。");
+            }
+            e.target.value = "";
+          }}
+          style={{ fontSize: 12 }}
+        />
+      )}
+    </div>
+  );
+}
 
 const KOREAN_SOURCE_OPTIONS = ["1行日記", "できる韓国語", "音楽", "ドラマ"];
 const WINE_SOURCE_OPTIONS = ["1冊目の教科書"];
@@ -407,7 +485,7 @@ export default function StudyApp() {
   const handleAddCard = () => {
     const schema = d.schema;
     if (schema === "korean") {
-      const { ko, romanized, meaning, rule, source } = koreanForm;
+      const { ko, romanized, meaning, rule, source, frontImage, backImage } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須だよ。");
         return;
@@ -422,10 +500,12 @@ export default function StudyApp() {
         meaning: meaning.trim(),
         rule: rule.trim() || "特になし",
         source: source.trim(),
+        frontImage,
+        backImage,
       });
       setKoreanForm(EMPTY_KOREAN_FORM);
     } else if (schema === "wine") {
-      const { q, a, region, topic, hypothesis, source } = wineForm;
+      const { q, a, region, topic, hypothesis, source, frontImage, backImage } = wineForm;
       if (!q.trim() || !a.trim()) {
         setFormError("質問と解答は必須だよ。");
         return;
@@ -441,10 +521,12 @@ export default function StudyApp() {
         topic: topic.trim() || "その他",
         hypothesis: hypothesis.trim(),
         source: source.trim(),
+        frontImage,
+        backImage,
       });
       setWineForm(EMPTY_WINE_FORM);
     } else {
-      const { front, back, source } = genericForm;
+      const { front, back, source, frontImage, backImage } = genericForm;
       if (!front.trim() || !back.trim()) {
         setFormError("表と裏は必須だよ。");
         return;
@@ -453,7 +535,7 @@ export default function StudyApp() {
         setFormError("同じ内容がもう登録されてるよ。");
         return;
       }
-      addCard({ front: front.trim(), back: back.trim(), source: source.trim() });
+      addCard({ front: front.trim(), back: back.trim(), source: source.trim(), frontImage, backImage });
       setGenericForm(EMPTY_GENERIC_FORM);
     }
     setFormError("");
@@ -470,6 +552,8 @@ export default function StudyApp() {
         meaning: card.meaning || "",
         rule: card.rule === "特になし" ? "" : card.rule || "",
         source: card.source || "",
+        frontImage: card.frontImage || "",
+        backImage: card.backImage || "",
       });
     } else if (schema === "wine") {
       setWineForm({
@@ -479,12 +563,16 @@ export default function StudyApp() {
         topic: card.topic === "その他" ? "" : card.topic || "",
         hypothesis: card.hypothesis || "",
         source: card.source || "",
+        frontImage: card.frontImage || "",
+        backImage: card.backImage || "",
       });
     } else {
       setGenericForm({
         front: card.front || "",
         back: card.back || "",
         source: card.source || "",
+        frontImage: card.frontImage || "",
+        backImage: card.backImage || "",
       });
     }
     setEditingCardId(card.id);
@@ -496,7 +584,7 @@ export default function StudyApp() {
   const handleEditCard = () => {
     const schema = d.schema;
     if (schema === "korean") {
-      const { ko, romanized, meaning, rule, source } = koreanForm;
+      const { ko, romanized, meaning, rule, source, frontImage, backImage } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須だよ。");
         return;
@@ -514,11 +602,13 @@ export default function StudyApp() {
           meaning: meaning.trim(),
           rule: rule.trim() || "特になし",
           source: source.trim(),
+          frontImage,
+          backImage,
         },
       }));
       setKoreanForm(EMPTY_KOREAN_FORM);
     } else if (schema === "wine") {
-      const { q, a, region, topic, hypothesis, source } = wineForm;
+      const { q, a, region, topic, hypothesis, source, frontImage, backImage } = wineForm;
       if (!q.trim() || !a.trim()) {
         setFormError("質問と解答は必須だよ。");
         return;
@@ -537,11 +627,13 @@ export default function StudyApp() {
           topic: topic.trim() || "その他",
           hypothesis: hypothesis.trim(),
           source: source.trim(),
+          frontImage,
+          backImage,
         },
       }));
       setWineForm(EMPTY_WINE_FORM);
     } else {
-      const { front, back, source } = genericForm;
+      const { front, back, source, frontImage, backImage } = genericForm;
       if (!front.trim() || !back.trim()) {
         setFormError("表と裏は必須だよ。");
         return;
@@ -552,7 +644,7 @@ export default function StudyApp() {
       }
       setDeck((prev) => ({
         ...prev,
-        [editingCardId]: { ...prev[editingCardId], front: front.trim(), back: back.trim(), source: source.trim() },
+        [editingCardId]: { ...prev[editingCardId], front: front.trim(), back: back.trim(), source: source.trim(), frontImage, backImage },
       }));
       setGenericForm(EMPTY_GENERIC_FORM);
     }
@@ -1064,6 +1156,9 @@ export default function StudyApp() {
       {!flipped ? (
         schema === "korean" ? (
           <div style={{ textAlign: "center" }}>
+            {current.frontImage && (
+              <img src={current.frontImage} alt="" style={{ maxWidth: "100%", maxHeight: 160, borderRadius: 8, marginBottom: 16, objectFit: "contain" }} />
+            )}
             <div
               style={{
                 fontFamily: "'IBM Plex Sans KR', sans-serif",
@@ -1099,6 +1194,9 @@ export default function StudyApp() {
           </div>
         ) : schema === "wine" ? (
           <div style={{ textAlign: "center" }}>
+            {current.frontImage && (
+              <img src={current.frontImage} alt="" style={{ maxWidth: "100%", maxHeight: 160, borderRadius: 8, marginBottom: 12, objectFit: "contain" }} />
+            )}
             <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 20, lineHeight: 1.5, marginBottom: 8 }}>
               {current.q}
             </div>
@@ -1106,6 +1204,9 @@ export default function StudyApp() {
           </div>
         ) : (
           <div style={{ textAlign: "center" }}>
+            {current.frontImage && (
+              <img src={current.frontImage} alt="" style={{ maxWidth: "100%", maxHeight: 160, borderRadius: 8, marginBottom: 12, objectFit: "contain" }} />
+            )}
             <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 22, fontWeight: 600, lineHeight: 1.5 }}>
               {current.front}
             </div>
@@ -1114,6 +1215,9 @@ export default function StudyApp() {
         )
       ) : schema === "korean" ? (
         <div>
+          {current.backImage && (
+            <img src={current.backImage} alt="" style={{ maxWidth: "100%", maxHeight: 160, borderRadius: 8, marginBottom: 12, objectFit: "contain" }} />
+          )}
           <div style={{ fontSize: 13, color: "#747872", marginBottom: 4 }}>{current.romanized}</div>
           <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 24, fontWeight: 600, marginBottom: 14 }}>
             {current.meaning}
@@ -1137,6 +1241,9 @@ export default function StudyApp() {
         </div>
       ) : schema === "wine" ? (
         <div>
+          {current.backImage && (
+            <img src={current.backImage} alt="" style={{ maxWidth: "100%", maxHeight: 160, borderRadius: 8, marginBottom: 12, objectFit: "contain" }} />
+          )}
           <div style={{ fontSize: 12, color: d.accent, fontWeight: 600, marginBottom: 6 }}>{current.topic}</div>
           <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 19, fontWeight: 600, lineHeight: 1.5 }}>
             {current.a}
@@ -1150,6 +1257,9 @@ export default function StudyApp() {
         </div>
       ) : (
         <div style={{ textAlign: "center" }}>
+          {current.backImage && (
+            <img src={current.backImage} alt="" style={{ maxWidth: "100%", maxHeight: 160, borderRadius: 8, marginBottom: 12, objectFit: "contain" }} />
+          )}
           <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 20, fontWeight: 600, lineHeight: 1.5, marginBottom: 10 }}>
             {current.back}
           </div>
@@ -2432,6 +2542,18 @@ export default function StudyApp() {
                       </option>
                     ))}
                   </select>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <ImagePickerField
+                      label="表面の画像（任意）"
+                      value={koreanForm.frontImage}
+                      onChange={(v) => setKoreanForm((f) => ({ ...f, frontImage: v }))}
+                    />
+                    <ImagePickerField
+                      label="裏面の画像（任意）"
+                      value={koreanForm.backImage}
+                      onChange={(v) => setKoreanForm((f) => ({ ...f, backImage: v }))}
+                    />
+                  </div>
                 </div>
               ) : schema === "wine" ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
@@ -2477,6 +2599,18 @@ export default function StudyApp() {
                       </option>
                     ))}
                   </select>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <ImagePickerField
+                      label="表面の画像（任意）"
+                      value={wineForm.frontImage}
+                      onChange={(v) => setWineForm((f) => ({ ...f, frontImage: v }))}
+                    />
+                    <ImagePickerField
+                      label="裏面の画像（任意）"
+                      value={wineForm.backImage}
+                      onChange={(v) => setWineForm((f) => ({ ...f, backImage: v }))}
+                    />
+                  </div>
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
@@ -2498,6 +2632,18 @@ export default function StudyApp() {
                     placeholder="出典・メモ（任意）"
                     style={inputStyle}
                   />
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <ImagePickerField
+                      label="表面の画像（任意）"
+                      value={genericForm.frontImage}
+                      onChange={(v) => setGenericForm((f) => ({ ...f, frontImage: v }))}
+                    />
+                    <ImagePickerField
+                      label="裏面の画像（任意）"
+                      value={genericForm.backImage}
+                      onChange={(v) => setGenericForm((f) => ({ ...f, backImage: v }))}
+                    />
+                  </div>
                 </div>
               )}
               {formError && <div style={{ color: "#B0483A", fontSize: 12, marginBottom: 8 }}>{formError}</div>}
