@@ -53,6 +53,8 @@ const MATERIALS_STORAGE_KEY = "study-srs.materials.v1";
 const POINTS_STORAGE_KEY = "study-srs.points.v1";
 const COMPLETED_MATERIALS_STORAGE_KEY = "study-srs.completedMaterials.v1";
 const BACKUP_STORAGE_KEY = "study-srs.backupMeta.v1";
+const SYNC_CODE_STORAGE_KEY = "study-srs.syncCode.v1";
+const SYNC_API_BASE = "https://study-app.senashinjo22.workers.dev/api/sync";
 
 const ALL_STORAGE_KEYS = [
   DECK_STORAGE_KEY,
@@ -72,6 +74,13 @@ const INTERVALS_DAYS = [1, 3, 7, 16, 30];
 const MASTERY_BOX = 3;
 // how many cards a pop-quiz test pulls at most
 const TEST_SAMPLE_SIZE = 15;
+
+function generateSyncCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I, to avoid mixups when typing it in
+  let code = "";
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
 
 function todayStr() {
   const d = new Date();
@@ -475,6 +484,10 @@ export default function StudyApp() {
   const [deckForm, setDeckForm] = useState({ name: "", iconKey: "book", colorIdx: 0 });
   const [points, setPoints] = useState(loadPoints);
   const [backupMeta, setBackupMeta] = useState(loadBackupMeta);
+  const [syncCode, setSyncCode] = useState(() => localStorage.getItem(SYNC_CODE_STORAGE_KEY) || "");
+  const [syncCodeInput, setSyncCodeInput] = useState(() => localStorage.getItem(SYNC_CODE_STORAGE_KEY) || "");
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
 
   const [stats, setStats] = useState(loadStats);
   const [testMode, setTestMode] = useState(false);
@@ -1246,6 +1259,71 @@ export default function StudyApp() {
     };
     reader.readAsText(file);
     e.target.value = "";
+  };
+
+  const handleSyncSave = async () => {
+    setSyncBusy(true);
+    setSyncMessage("");
+    try {
+      let code = syncCode;
+      if (!code) {
+        code = generateSyncCode();
+        localStorage.setItem(SYNC_CODE_STORAGE_KEY, code);
+        setSyncCode(code);
+        setSyncCodeInput(code);
+      }
+      const data = {};
+      ALL_STORAGE_KEYS.forEach((key) => {
+        const value = localStorage.getItem(key);
+        if (value !== null) data[key] = value;
+      });
+      const payload = { app: "ippo", version: 1, exportedAt: new Date().toISOString(), data };
+      const res = await fetch(`${SYNC_API_BASE}/${code}`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("save failed");
+      setSyncMessage(`保存したよ！コード: ${code}`);
+    } catch {
+      setSyncMessage("保存に失敗したよ。通信環境を確認してね。");
+    } finally {
+      setSyncBusy(false);
+    }
+  };
+
+  const handleSyncLoad = async () => {
+    const code = syncCodeInput.trim().toUpperCase();
+    if (!code) {
+      setSyncMessage("コードを入力してね。");
+      return;
+    }
+    setSyncBusy(true);
+    setSyncMessage("");
+    try {
+      const res = await fetch(`${SYNC_API_BASE}/${code}`);
+      if (res.status === 404) {
+        setSyncMessage("そのコードのデータは見つからなかったよ。");
+        return;
+      }
+      if (!res.ok) throw new Error("load failed");
+      const parsed = await res.json();
+      if (!parsed.data || typeof parsed.data !== "object") {
+        setSyncMessage("データの形式が正しくなかったよ。");
+        return;
+      }
+      if (!window.confirm("今のデータを上書きして復元する？元に戻せないよ。")) return;
+      Object.entries(parsed.data).forEach(([key, value]) => {
+        if (ALL_STORAGE_KEYS.includes(key)) localStorage.setItem(key, value);
+      });
+      localStorage.setItem(SYNC_CODE_STORAGE_KEY, code);
+      window.alert("読み込んだよ。アプリを再読み込みするね。");
+      window.location.reload();
+    } catch {
+      setSyncMessage("読み込みに失敗したよ。通信環境を確認してね。");
+    } finally {
+      setSyncBusy(false);
+    }
   };
 
   const handleShare = async () => {
@@ -2351,6 +2429,67 @@ export default function StudyApp() {
                 </button>
               </div>
               <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} style={{ display: "none" }} />
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #E5E2DC", marginTop: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 4 }}>☁️ 他の端末と同期</div>
+              <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
+                コードでPCなど他の端末とデータをやり取りできるよ。自動では同期しないから、更新したいタイミングで手動で保存・読み込みしてね。
+              </div>
+              <button
+                onClick={handleSyncSave}
+                disabled={syncBusy}
+                style={{
+                  width: "100%",
+                  padding: "10px 0",
+                  borderRadius: 8,
+                  border: "1px solid #E5E2DC",
+                  background: "transparent",
+                  color: syncBusy ? "#C9C2B4" : "#434842",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: syncBusy ? "default" : "pointer",
+                  marginBottom: 8,
+                }}
+              >
+                ☁️ 保存する{syncCode ? `（コード: ${syncCode}）` : ""}
+              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  value={syncCodeInput}
+                  onChange={(e) => setSyncCodeInput(e.target.value)}
+                  placeholder="コードを入力"
+                  style={{ ...inputStyle, flex: 1, width: "auto" }}
+                />
+                <button
+                  onClick={handleSyncLoad}
+                  disabled={syncBusy}
+                  style={{
+                    padding: "0 16px",
+                    borderRadius: 8,
+                    border: "1px solid #E5E2DC",
+                    background: "transparent",
+                    color: syncBusy ? "#C9C2B4" : "#434842",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: syncBusy ? "default" : "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  ☁️ 読み込む
+                </button>
+              </div>
+              {syncMessage && (
+                <div
+                  style={{
+                    fontSize: 12,
+                    marginTop: 8,
+                    color: syncMessage.includes("失敗") || syncMessage.includes("見つから") || syncMessage.includes("正しく") ? "#B0483A" : "#4e604f",
+                  }}
+                >
+                  {syncMessage}
+                </div>
+              )}
             </div>
           </div>
         )}

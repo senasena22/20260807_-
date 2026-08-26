@@ -1,6 +1,12 @@
-name = "ippo"
+name = "study-app"
+main = "src/worker.js"
 compatibility_date = "2026-08-25"
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
+
+[[kv_namespaces]]
+binding = "SYNC_KV"
+id = "b73ab79aa9dc461dbe1403cffc5281c2"
