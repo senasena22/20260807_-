@@ -1556,9 +1556,9 @@ export default function StudyApp() {
           </div>
           <h1
             style={{
-              fontFamily: "'Nunito Sans', sans-serif",
-              fontWeight: 700,
-              fontSize: 26,
+              fontFamily: POP_FONT,
+              fontWeight: 800,
+              fontSize: 28,
               margin: 0,
               color: "#1a1c1b",
             }}
@@ -1573,11 +1573,12 @@ export default function StudyApp() {
               marginTop: 10,
               padding: "6px 14px",
               borderRadius: 999,
-              background: "#FFFFFF",
-              border: "1px solid #E5E2DC",
+              background: POP_COLORS[0].bg,
+              transform: "rotate(-3deg)",
+              fontFamily: POP_FONT,
               fontSize: 13,
-              fontWeight: 600,
-              color: "#434842",
+              fontWeight: 700,
+              color: POP_COLORS[0].accent,
             }}
           >
             ✦ {points.total.toLocaleString()} pt
@@ -1587,20 +1588,22 @@ export default function StudyApp() {
         {/* Home */}
         {page === "home" && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ position: "relative", marginBottom: 18 }}>
+            <div style={{ position: "relative", marginBottom: 18, paddingTop: 6 }}>
               <div
                 style={{
                   position: "absolute",
-                  top: -6,
-                  right: 8,
-                  width: 34,
-                  height: 34,
+                  top: -14,
+                  right: 22,
+                  width: 54,
+                  height: 54,
                   borderRadius: "38% 62% 63% 37% / 41% 44% 56% 59%",
                   background: POP_COLORS[1].bg,
                   zIndex: 0,
                 }}
               />
-              <div style={{ position: "relative", fontFamily: POP_FONT, fontWeight: 800, fontSize: 30, color: "#1a1c1b" }}>
+              <PopStar color={POP_COLORS[3].accent} size={20} style={{ top: -8, right: -2, transform: "rotate(12deg)" }} />
+              <PopStar color={POP_COLORS[0].accent} size={13} style={{ top: 34, right: 74, transform: "rotate(-18deg)" }} />
+              <div style={{ position: "relative", fontFamily: POP_FONT, fontWeight: 800, fontSize: 36, lineHeight: 1.1, color: "#1a1c1b" }}>
                 こんにちは！
               </div>
             </div>
@@ -1688,7 +1691,9 @@ export default function StudyApp() {
             <div
               onClick={todayDueAcrossDecks > 0 ? goToTodayGoal : undefined}
               style={{
-                background: POP_COLORS[2].bg,
+                position: "relative",
+                overflow: "hidden",
+                background: POP_COLORS[2].accent,
                 borderRadius: 22,
                 padding: 18,
                 marginBottom: 18,
@@ -1699,16 +1704,27 @@ export default function StudyApp() {
                 gap: 12,
               }}
             >
-              <div>
-                <div style={{ fontFamily: POP_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 6 }}>
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: -20,
+                  right: -14,
+                  width: 70,
+                  height: 70,
+                  borderRadius: "42% 58% 61% 39% / 46% 40% 60% 54%",
+                  background: "rgba(255,255,255,0.16)",
+                }}
+              />
+              <div style={{ position: "relative" }}>
+                <div style={{ fontFamily: POP_FONT, fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
                   今日の目標
                 </div>
-                <div style={{ fontSize: 13, color: "#434842" }}>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.9)" }}>
                   {todayDueAcrossDecks > 0 ? `今日は${todayDueAcrossDecks}枚の復習があるよ` : "今日の復習はもう終わってるよ、えらい！"}
                 </div>
               </div>
               {todayDueAcrossDecks > 0 && (
-                <div style={{ color: POP_COLORS[2].accent, fontSize: 22, fontWeight: 800, flexShrink: 0 }}>›</div>
+                <div style={{ position: "relative", color: "#fff", fontSize: 22, fontWeight: 800, flexShrink: 0 }}>›</div>
               )}
             </div>
 
@@ -1727,11 +1743,29 @@ export default function StudyApp() {
                 const total = deckTotalCards(val.key);
                 const mastered = deckMasteredCards(val.key);
                 const pop = POP_COLORS[i % POP_COLORS.length];
+                const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
                 return (
                   <div
                     key={val.key}
-                    style={{ background: pop.bg, borderRadius: 20, padding: 16 }}
+                    style={{ position: "relative", background: pop.bg, borderRadius: 20, padding: 16 }}
                   >
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 12,
+                        right: 14,
+                        background: "#fff",
+                        color: pop.accent,
+                        fontFamily: POP_FONT,
+                        fontWeight: 700,
+                        fontSize: 11,
+                        padding: "4px 9px",
+                        borderRadius: 999,
+                        transform: "rotate(6deg)",
+                      }}
+                    >
+                      {pct}%
+                    </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                       <div
                         style={{
@@ -3479,6 +3513,22 @@ const inputStyle = {
   fontFamily: "inherit",
   boxSizing: "border-box",
 };
+
+function PopStar({ color, size = 22, style }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        width: size,
+        height: size,
+        background: color,
+        clipPath:
+          "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+        ...style,
+      }}
+    />
+  );
+}
 
 function smallLinkButtonStyle(color, prominent = false) {
   return {
