@@ -40,14 +40,15 @@ const ACCENT_PRESETS = [
 ];
 
 // TAMERU brand system — calm, minimal: sage green + neutral off-white/ivory
+// palette pinned to the brand board: #A8C5B0 sage / #F5F2EC cream / #E8E2D6 beige / #8FA194 deep sage / #333333 charcoal
 const BRAND_FONT = "'Noto Sans JP', system-ui, -apple-system, 'Hiragino Sans', sans-serif";
-const BRAND_ACCENT = "#4E6B57";
+const BRAND_ACCENT = "#5E7A68"; // darker than the board's #8FA194 so white CTA text stays readable
 const BRAND_SHADOW = "0 2px 10px rgba(51,54,47,0.06)";
 const BRAND_TONES = [
-  { bg: "#F1EDE3", accent: "#8A7A5C" }, // beige / muted taupe
-  { bg: "#E8EEE7", accent: "#4E6B57" }, // pale sage / sage
-  { bg: "#F1EEE8", accent: "#6E6A5D" }, // grayish-beige / charcoal-taupe
-  { bg: "#E3ECE5", accent: "#5C7A63" }, // pale sage 2 / muted green
+  { bg: "#E8E2D6", accent: "#8A7A5C" }, // beige / muted taupe
+  { bg: "#F5F2EC", accent: "#8FA194" }, // cream / deep sage
+  { bg: "#EDEAE1", accent: "#6E6A5D" }, // grayish-beige / charcoal-taupe
+  { bg: "#DCE6DF", accent: "#5E7A68" }, // pale sage / sage
 ];
 
 const BUILTIN_DECKS = [
