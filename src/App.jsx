@@ -2370,26 +2370,22 @@ export default function StudyApp() {
                 })}
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Study record (calendar + share) */}
-        {page === "home" && (
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 14, border: "1px solid #E5E2DC", textAlign: "center", marginBottom: 14 }}>
+            {/* Study record (calendar + share) */}
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 14, border: "1px solid #E5E2DC", textAlign: "center", marginTop: 14 }}>
               <div style={{ fontSize: 12, color: "#747872", marginBottom: 4 }}>全デッキ定着</div>
               <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 22, color: "#4e604f" }}>
                 {totalMasteredAll}/{totalCardsAll}枚
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 14 }}>
               <button onClick={handleShare} style={smallLinkButtonStyle(d.accent, true)}>
                 📤 進捗をシェア
               </button>
             </div>
 
-            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #E5E2DC" }}>
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #E5E2DC", marginTop: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 4 }}>💾 データのバックアップ</div>
               <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
                 定期的に書き出しておくと、機種変更やアプリの再インストールでも復元できるよ。
