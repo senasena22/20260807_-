@@ -375,20 +375,6 @@ function loadStats() {
   }
 }
 
-// current streak of consecutive study days, anchored at today (or yesterday, so it doesn't drop to 0 before today's review)
-function computeStreak(studyDates) {
-  const set = new Set(studyDates);
-  const today = todayStr();
-  let cursor = set.has(today) ? today : addDaysStr(today, -1);
-  if (!set.has(cursor)) return 0;
-  let streak = 0;
-  while (set.has(cursor)) {
-    streak++;
-    cursor = addDaysStr(cursor, -1);
-  }
-  return streak;
-}
-
 const CALENDAR_WEEKS = 12;
 
 function buildCalendarDays(studyDates) {
@@ -1188,7 +1174,6 @@ export default function StudyApp() {
     .filter(Boolean)
     .sort()[0];
 
-  const streak = computeStreak(stats.studyDates);
   const daysSinceLastBackup = backupMeta.lastExportedAt ? Math.abs(daysUntil(backupMeta.lastExportedAt)) : null;
   const backupDue = daysSinceLastBackup === null || daysSinceLastBackup >= 7;
   const calendarDays = useMemo(() => buildCalendarDays(stats.studyDates), [stats.studyDates]);
@@ -1377,7 +1362,7 @@ export default function StudyApp() {
   const handleShare = async () => {
     try {
       const canvas = await generateShareImage({
-        streak,
+        studiedDays: stats.studyDates.length,
         points: points.total,
         totalMastered: totalMasteredAll,
         totalCards: totalCardsAll,
@@ -1385,10 +1370,10 @@ export default function StudyApp() {
       });
       canvas.toBlob(async (blob) => {
         if (!blob) return;
-        const file = new File([blob], `ippo-${todayStr()}.png`, { type: "image/png" });
+        const file = new File([blob], `tameru-${todayStr()}.png`, { type: "image/png" });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
-            await navigator.share({ files: [file], title: "いっぽ 進捗" });
+            await navigator.share({ files: [file], title: "TAMERU 進捗" });
             return;
           } catch {
             // user cancelled the share sheet; fall back to download below
@@ -3533,8 +3518,8 @@ function smallLinkButtonStyle(color, prominent = false) {
   };
 }
 
-async function generateShareImage({ streak, points, totalMastered, totalCards, calendarDays }) {
-  const accent = "#4e604f";
+async function generateShareImage({ studiedDays, points, totalMastered, totalCards, calendarDays }) {
+  const accent = "#5E7A68";
   const accentSoft = "#E4EBE8";
   if (document.fonts && document.fonts.ready) {
     await document.fonts.ready.catch(() => {});
@@ -3565,23 +3550,22 @@ async function generateShareImage({ streak, points, totalMastered, totalCards, c
   ctx.textAlign = "center";
   let y = pad + 60;
 
-  ctx.fillStyle = "#747872";
-  ctx.font = '600 18px "Noto Sans JP", sans-serif';
-  ctx.fillText("積み上げ復習", cx, y);
-  y += 44;
-
   ctx.fillStyle = "#1a1c1b";
-  ctx.font = '700 32px "Noto Sans JP", sans-serif';
-  ctx.fillText("いっぽの記録", cx, y);
+  ctx.font = '700 30px "Noto Sans JP", sans-serif';
+  ctx.fillText("TAMERU", cx, y);
+  y += 30;
+  ctx.fillStyle = "#9A9488";
+  ctx.font = '500 14px "Noto Sans JP", sans-serif';
+  ctx.fillText("小さな学びを、ちゃんとためる。", cx, y);
   y += 100;
 
   ctx.fillStyle = accent;
-  ctx.font = '700 96px "Noto Sans JP", sans-serif';
-  ctx.fillText(`🔥 ${streak}`, cx, y);
+  ctx.font = '700 88px "Noto Sans JP", sans-serif';
+  ctx.fillText(`${studiedDays}日`, cx, y);
   y += 36;
   ctx.fillStyle = "#434842";
   ctx.font = '600 20px "Noto Sans JP", sans-serif';
-  ctx.fillText("連続学習日数", cx, y);
+  ctx.fillText("これまで学習した日", cx, y);
   y += 60;
 
   ctx.fillStyle = accentSoft;
