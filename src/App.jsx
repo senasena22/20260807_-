@@ -1531,7 +1531,10 @@ export default function StudyApp() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: page === "review" ? "32px 16px 60px" : "32px 16px 108px",
+        paddingTop: "calc(32px + env(safe-area-inset-top))",
+        paddingLeft: "calc(16px + env(safe-area-inset-left))",
+        paddingRight: "calc(16px + env(safe-area-inset-right))",
+        paddingBottom: page === "review" ? "60px" : "108px",
       }}
     >
       <link
@@ -1817,10 +1820,25 @@ export default function StudyApp() {
           <div style={{ fontFamily: POP_FONT, fontWeight: 700, fontSize: 12, letterSpacing: "0.12em", color: POP_COLORS[2].accent, marginBottom: 2 }}>
             LIBRARY
           </div>
-          <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 30, marginBottom: 6, color: "#1a1c1b" }}>
-            マイライブラリ
+          <div style={{ position: "relative", marginBottom: 6, paddingTop: 4 }}>
+            <div
+              style={{
+                position: "absolute",
+                top: -10,
+                right: 30,
+                width: 42,
+                height: 42,
+                borderRadius: "62% 38% 41% 59% / 53% 46% 54% 47%",
+                background: POP_COLORS[2].bg,
+                zIndex: 0,
+              }}
+            />
+            <PopStar color={POP_COLORS[2].accent} size={16} style={{ top: -6, right: 6, transform: "rotate(-14deg)" }} />
+            <div style={{ position: "relative", fontFamily: POP_FONT, fontWeight: 800, fontSize: 30, color: "#1a1c1b" }}>
+              マイライブラリ
+            </div>
           </div>
-          <div style={{ fontSize: 13, color: "#434842", marginBottom: 18 }}>その調子で頑張ろう！</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: POP_COLORS[2].accent, marginBottom: 18 }}>その調子で頑張ろう！</div>
 
         {showDeckForm && (
           <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, marginBottom: 20, border: "1px solid #E5E2DC" }}>
@@ -2020,7 +2038,22 @@ export default function StudyApp() {
             <div style={{ fontFamily: POP_FONT, fontWeight: 700, fontSize: 12, letterSpacing: "0.12em", color: POP_COLORS[0].accent, marginBottom: 2 }}>
               GOALS
             </div>
-            <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 30, color: "#1a1c1b" }}>目標</div>
+            <div style={{ position: "relative", paddingTop: 4 }}>
+              <div
+                style={{
+                  position: "absolute",
+                  top: -10,
+                  right: 34,
+                  width: 40,
+                  height: 40,
+                  borderRadius: "40% 60% 55% 45% / 60% 44% 56% 40%",
+                  background: POP_COLORS[0].bg,
+                  zIndex: 0,
+                }}
+              />
+              <PopStar color={POP_COLORS[0].accent} size={15} style={{ top: -4, right: 12, transform: "rotate(18deg)" }} />
+              <div style={{ position: "relative", fontFamily: POP_FONT, fontWeight: 800, fontSize: 30, color: "#1a1c1b" }}>目標</div>
+            </div>
           </div>
         )}
 
@@ -2385,8 +2418,23 @@ export default function StudyApp() {
             <div style={{ fontFamily: POP_FONT, fontWeight: 700, fontSize: 12, letterSpacing: "0.12em", color: POP_COLORS[1].accent, marginBottom: 2 }}>
               REPORT
             </div>
-            <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 30, marginBottom: 16, color: "#1a1c1b" }}>
-              学習レポート
+            <div style={{ position: "relative", marginBottom: 16, paddingTop: 4 }}>
+              <div
+                style={{
+                  position: "absolute",
+                  top: -10,
+                  right: 20,
+                  width: 44,
+                  height: 44,
+                  borderRadius: "55% 45% 38% 62% / 45% 55% 45% 55%",
+                  background: POP_COLORS[1].bg,
+                  zIndex: 0,
+                }}
+              />
+              <PopStar color={POP_COLORS[1].accent} size={16} style={{ top: -8, right: -2, transform: "rotate(-10deg)" }} />
+              <div style={{ position: "relative", fontFamily: POP_FONT, fontWeight: 800, fontSize: 30, color: "#1a1c1b" }}>
+                学習レポート
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 6, marginBottom: 16, background: "#F0ECE1", borderRadius: 999, padding: 4 }}>
