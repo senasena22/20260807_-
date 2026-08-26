@@ -1597,6 +1597,7 @@ export default function StudyApp() {
             <LayeredE />
             <span>RU</span>
           </h1>
+          <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>小さな学びを、ちゃんとためる。</div>
         </div>
 
         {/* Home */}
@@ -3478,15 +3479,14 @@ const inputStyle = {
   boxSizing: "border-box",
 };
 
-// the wordmark's "E": three stacked bars of increasing/uneven length, evoking things
-// accumulating in layers rather than a plain letterform
+// the wordmark's "E": three stacked sage bars standing in for the letterform,
+// evoking things accumulating in layers
 function LayeredE() {
   return (
-    <svg viewBox="0 0 15 21" style={{ height: "0.78em", width: "0.56em", display: "inline-block" }} fill="currentColor">
-      <rect x="0" y="0" width="4" height="21" />
-      <rect x="0" y="0" width="15" height="4.4" />
-      <rect x="0" y="8.3" width="10" height="4.4" />
-      <rect x="0" y="16.6" width="12" height="4.4" />
+    <svg viewBox="0 0 15 20" style={{ height: "0.74em", width: "0.56em", display: "inline-block" }} fill={BRAND_ACCENT}>
+      <rect x="0" y="0.5" width="15" height="4.3" rx="0.5" />
+      <rect x="0" y="7.85" width="15" height="4.3" rx="0.5" />
+      <rect x="0" y="15.2" width="15" height="4.3" rx="0.5" />
     </svg>
   );
 }
