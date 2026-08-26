@@ -1779,7 +1779,7 @@ export default function StudyApp() {
                         style={{
                           width: 40,
                           height: 40,
-                          borderRadius: 12,
+                          borderRadius: "50%",
                           background: "#FFFFFF",
                           display: "flex",
                           alignItems: "center",
@@ -1984,20 +1984,22 @@ export default function StudyApp() {
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 12,
-                        background: "#FFFFFF",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: pop.accent,
-                      }}
-                    >
-                      <TIcon size={20} />
-                    </div>
+                    <ProgressRing pct={pct} color={pop.accent} trackColor="rgba(255,255,255,0.7)" size={48} strokeWidth={5}>
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          background: "#FFFFFF",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: pop.accent,
+                        }}
+                      >
+                        <TIcon size={16} />
+                      </div>
+                    </ProgressRing>
                     {!val.builtin && (
                       <button
                         onClick={(e) => {
@@ -2012,9 +2014,6 @@ export default function StudyApp() {
                     )}
                   </div>
                   <div style={{ fontFamily: POP_FONT, fontWeight: 700, fontSize: 15, color: "#1a1c1b" }}>{val.label}</div>
-                  <div style={{ height: 6, background: "rgba(255,255,255,0.7)", borderRadius: 3, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${pct}%`, background: pop.accent }} />
-                  </div>
                   <div style={{ fontSize: 12, color: "#434842" }}>
                     {total > 0 ? `${mastered}/${total} 定着・${pct}%` : "カードなし"}
                   </div>
@@ -2245,18 +2244,24 @@ export default function StudyApp() {
               </div>
             ) : material ? (
               <div>
-                <div style={{ fontFamily: POP_FONT, fontWeight: 700, fontSize: 15 }}>{material.name}</div>
-                <div style={{ fontSize: 12, color: "#1a1c1b", marginTop: 4 }}>
-                  {material.currentUnit} / {material.totalUnits}（残り{materialRemaining}）
-                </div>
-                <div style={{ height: 8, background: "rgba(255,255,255,0.7)", borderRadius: 4, marginTop: 8, overflow: "hidden" }}>
-                  <div
-                    style={{
-                      height: "100%",
-                      width: `${material.totalUnits > 0 ? Math.min(100, (material.currentUnit / material.totalUnits) * 100) : 0}%`,
-                      background: POP_COLORS[3].accent,
-                    }}
-                  />
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <ProgressRing
+                    pct={material.totalUnits > 0 ? (material.currentUnit / material.totalUnits) * 100 : 0}
+                    color={POP_COLORS[3].accent}
+                    trackColor="rgba(255,255,255,0.7)"
+                    size={64}
+                    strokeWidth={7}
+                  >
+                    <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 14, color: POP_COLORS[3].accent }}>
+                      {material.totalUnits > 0 ? Math.round((material.currentUnit / material.totalUnits) * 100) : 0}%
+                    </div>
+                  </ProgressRing>
+                  <div>
+                    <div style={{ fontFamily: POP_FONT, fontWeight: 700, fontSize: 15 }}>{material.name}</div>
+                    <div style={{ fontSize: 12, color: "#1a1c1b", marginTop: 4 }}>
+                      {material.currentUnit} / {material.totalUnits}（残り{materialRemaining}）
+                    </div>
+                  </div>
                 </div>
                 {materialRemaining > 0 ? (
                   <div style={{ fontSize: 12, color: "#1a1c1b", marginTop: 10 }}>
@@ -2475,22 +2480,20 @@ export default function StudyApp() {
               </div>
             )}
 
-            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #E5E2DC" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 12 }}>デッキ別進捗</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {decks.map((val) => {
+            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: POP_SHADOW }}>
+              <div style={{ fontFamily: POP_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 14 }}>デッキ別進捗</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center" }}>
+                {decks.map((val, i) => {
                   const total = deckTotalCards(val.key);
                   const mastered = deckMasteredCards(val.key);
                   const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+                  const pop = POP_COLORS[i % POP_COLORS.length];
                   return (
-                    <div key={val.key}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                        <span style={{ fontWeight: 600 }}>{val.label}</span>
-                        <span style={{ color: "#747872" }}>{pct}%</span>
-                      </div>
-                      <div style={{ height: 6, background: "#e9e2d4", borderRadius: 3, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${pct}%`, background: val.accent }} />
-                      </div>
+                    <div key={val.key} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <ProgressRing pct={pct} color={pop.accent} trackColor={pop.bg} size={72} strokeWidth={8}>
+                        <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 15, color: pop.accent }}>{pct}%</div>
+                      </ProgressRing>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#1a1c1b" }}>{val.label}</div>
                     </div>
                   );
                 })}
@@ -2506,13 +2509,26 @@ export default function StudyApp() {
             </div>
 
             <div style={{ display: "flex", justifyContent: "center", marginTop: 14 }}>
-              <button onClick={handleShare} style={smallLinkButtonStyle(d.accent, true)}>
+              <button
+                onClick={handleShare}
+                style={{
+                  border: "none",
+                  background: POP_COLORS[1].bg,
+                  color: POP_COLORS[1].accent,
+                  fontFamily: POP_FONT,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  padding: "10px 16px",
+                  borderRadius: 999,
+                  cursor: "pointer",
+                }}
+              >
                 📤 進捗をシェア
               </button>
             </div>
 
-            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #E5E2DC", marginTop: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 4 }}>💾 データのバックアップ</div>
+            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: POP_SHADOW, marginTop: 14 }}>
+              <div style={{ fontFamily: POP_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 4 }}>💾 データのバックアップ</div>
               <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
                 定期的に書き出しておくと、機種変更やアプリの再インストールでも復元できるよ。
               </div>
@@ -2522,11 +2538,11 @@ export default function StudyApp() {
                   style={{
                     flex: 1,
                     padding: "10px 0",
-                    borderRadius: 8,
-                    border: "1px solid #E5E2DC",
-                    background: "transparent",
-                    color: "#434842",
-                    fontWeight: 600,
+                    borderRadius: 999,
+                    border: "none",
+                    background: POP_COLORS[3].bg,
+                    color: POP_COLORS[3].accent,
+                    fontWeight: 700,
                     fontSize: 13,
                     cursor: "pointer",
                   }}
@@ -2538,11 +2554,11 @@ export default function StudyApp() {
                   style={{
                     flex: 1,
                     padding: "10px 0",
-                    borderRadius: 8,
-                    border: "1px solid #E5E2DC",
-                    background: "transparent",
-                    color: "#434842",
-                    fontWeight: 600,
+                    borderRadius: 999,
+                    border: "none",
+                    background: POP_COLORS[3].bg,
+                    color: POP_COLORS[3].accent,
+                    fontWeight: 700,
                     fontSize: 13,
                     cursor: "pointer",
                   }}
@@ -2553,8 +2569,8 @@ export default function StudyApp() {
               <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} style={{ display: "none" }} />
             </div>
 
-            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #E5E2DC", marginTop: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 4 }}>☁️ 他の端末と同期</div>
+            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: POP_SHADOW, marginTop: 14 }}>
+              <div style={{ fontFamily: POP_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 4 }}>☁️ 他の端末と同期</div>
               <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
                 コードでPCなど他の端末とデータをやり取りできるよ。自動では同期しないから、更新したいタイミングで手動で保存・読み込みしてね。
               </div>
@@ -2564,11 +2580,12 @@ export default function StudyApp() {
                 style={{
                   width: "100%",
                   padding: "10px 0",
-                  borderRadius: 8,
-                  border: "1px solid #E5E2DC",
-                  background: "transparent",
-                  color: syncBusy ? "#C9C2B4" : "#434842",
-                  fontWeight: 600,
+                  borderRadius: 999,
+                  border: "none",
+                  background: syncBusy ? "#EDE9DD" : POP_COLORS[2].bg,
+                  color: syncBusy ? "#C9C2B4" : POP_COLORS[2].accent,
+                  fontFamily: POP_FONT,
+                  fontWeight: 700,
                   fontSize: 13,
                   cursor: syncBusy ? "default" : "pointer",
                   marginBottom: 8,
@@ -2588,11 +2605,12 @@ export default function StudyApp() {
                   disabled={syncBusy}
                   style={{
                     padding: "0 16px",
-                    borderRadius: 8,
-                    border: "1px solid #E5E2DC",
-                    background: "transparent",
-                    color: syncBusy ? "#C9C2B4" : "#434842",
-                    fontWeight: 600,
+                    borderRadius: 999,
+                    border: "none",
+                    background: syncBusy ? "#EDE9DD" : POP_COLORS[2].bg,
+                    color: syncBusy ? "#C9C2B4" : POP_COLORS[2].accent,
+                    fontFamily: POP_FONT,
+                    fontWeight: 700,
                     fontSize: 13,
                     cursor: syncBusy ? "default" : "pointer",
                     whiteSpace: "nowrap",
@@ -3601,6 +3619,34 @@ const inputStyle = {
   fontFamily: "inherit",
   boxSizing: "border-box",
 };
+
+function ProgressRing({ pct, color, trackColor = "rgba(0,0,0,0.08)", size = 56, strokeWidth = 6, children }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.min(100, Math.max(0, pct));
+  const offset = circumference * (1 - clamped / 100);
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={trackColor} strokeWidth={strokeWidth} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function PopStar({ color, size = 22, style }) {
   return (
