@@ -105,6 +105,30 @@ function addDaysStr(dateStr, days) {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
 }
 
+// current calendar week (Monday-start), as an array of 7 "YYYY-MM-DD" strings
+function getCurrentWeekDates() {
+  const today = new Date();
+  const dow = today.getDay(); // 0 = Sun ... 6 = Sat
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+  }
+  return days;
+}
+
+function formatStudyDuration(totalSeconds) {
+  const totalMinutes = Math.round(totalSeconds / 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m}分`;
+  return `${h}時間${m}分`;
+}
+
 function daysUntil(dateStr) {
   const today = todayStr();
   const [y1, m1, d1] = today.split("-").map(Number);
@@ -336,16 +360,17 @@ function buildSessionQueue(deck, domain) {
 function loadStats() {
   try {
     const raw = localStorage.getItem(STATS_STORAGE_KEY);
-    if (!raw) return { studyDates: [], masteredEvents: [], testHistory: [], studyDomains: [] };
+    if (!raw) return { studyDates: [], masteredEvents: [], testHistory: [], studyDomains: [], studySeconds: {} };
     const parsed = JSON.parse(raw);
     return {
       studyDates: Array.isArray(parsed.studyDates) ? parsed.studyDates : [],
       masteredEvents: Array.isArray(parsed.masteredEvents) ? parsed.masteredEvents : [],
       testHistory: Array.isArray(parsed.testHistory) ? parsed.testHistory : [],
       studyDomains: Array.isArray(parsed.studyDomains) ? parsed.studyDomains : [],
+      studySeconds: parsed.studySeconds && typeof parsed.studySeconds === "object" ? parsed.studySeconds : {},
     };
   } catch {
-    return { studyDates: [], masteredEvents: [], testHistory: [], studyDomains: [] };
+    return { studyDates: [], masteredEvents: [], testHistory: [], studyDomains: [], studySeconds: {} };
   }
 }
 
@@ -563,6 +588,28 @@ export default function StudyApp() {
     const today = todayStr();
     setPoints((prev) => (prev.lastOpenBonusDate === today ? prev : { ...prev, total: prev.total + 1, lastOpenBonusDate: today }));
   }, []);
+
+  // tracks time actually spent reviewing, ticking while on the review page and the tab is visible
+  useEffect(() => {
+    if (page !== "review") return;
+    let active = document.visibilityState === "visible";
+    const onVisibility = () => {
+      active = document.visibilityState === "visible";
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    const interval = setInterval(() => {
+      if (!active) return;
+      const today = todayStr();
+      setStats((prev) => ({
+        ...prev,
+        studySeconds: { ...prev.studySeconds, [today]: (prev.studySeconds[today] || 0) + 20 },
+      }));
+    }, 20000);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [page]);
 
   const addCard = (card) => {
     const id = newCardId();
@@ -1214,6 +1261,10 @@ export default function StudyApp() {
       ? Math.round((stats.testHistory.reduce((sum, t) => sum + t.correct / t.total, 0) / stats.testHistory.length) * 100)
       : null;
   const todayDueAcrossDecks = decks.reduce((sum, dk) => sum + buildSessionQueue(deck, dk.key).length, 0);
+
+  const weekDates = getCurrentWeekDates();
+  const weekTotalSeconds = weekDates.reduce((sum, d) => sum + (stats.studySeconds[d] || 0), 0);
+  const maxWeekDaySeconds = Math.max(1, ...weekDates.map((d) => stats.studySeconds[d] || 0));
 
   const material = materials[domain];
   const materialRemaining = material ? Math.max(0, material.totalUnits - material.currentUnit) : 0;
@@ -2461,6 +2512,42 @@ export default function StudyApp() {
                   {r.label}
                 </button>
               ))}
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: POP_SHADOW, marginBottom: 14 }}>
+              <div style={{ fontSize: 12, color: "#747872", fontWeight: 600, marginBottom: 4 }}>今週の学習時間</div>
+              <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 26, color: "#1a1c1b", marginBottom: 16 }}>
+                {formatStudyDuration(weekTotalSeconds)}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 6 }}>
+                {weekDates.map((d, i) => {
+                  const seconds = stats.studySeconds[d] || 0;
+                  const barPct = seconds > 0 ? Math.max(6, (seconds / maxWeekDaySeconds) * 100) : 0;
+                  const isToday = d === todayStr();
+                  const label = ["月", "火", "水", "木", "金", "土", "日"][i];
+                  const pop = POP_COLORS[i % POP_COLORS.length];
+                  return (
+                    <div key={d} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: "100%", height: 64, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                        <div
+                          style={{
+                            width: 14,
+                            height: `${barPct}%`,
+                            minHeight: 6,
+                            borderRadius: 999,
+                            background: seconds > 0 ? pop.accent : "#EDE9DD",
+                            boxSizing: "border-box",
+                            border: isToday ? `2px solid ${pop.accent}` : "none",
+                          }}
+                        />
+                      </div>
+                      <div style={{ fontSize: 11, fontWeight: isToday ? 800 : 600, color: isToday ? pop.accent : "#9A9488" }}>
+                        {label}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
