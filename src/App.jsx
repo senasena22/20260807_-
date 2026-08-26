@@ -1536,55 +1536,25 @@ export default function StudyApp() {
     >
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,600&family=Baloo+2:wght@500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,600&family=Baloo+2:wght@500;600;700;800&family=Jost:wght@500;600;700&display=swap"
       />
 
       <div style={{ width: "100%", maxWidth: 440 }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div
-            style={{
-              fontFamily: "'Nunito Sans', sans-serif",
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#4e604f",
-              marginBottom: 4,
-            }}
-          >
-            積み上げ復習
-          </div>
           <h1
             style={{
-              fontFamily: POP_FONT,
-              fontWeight: 800,
-              fontSize: 28,
+              fontFamily: "'Futura', 'Jost', sans-serif",
+              fontWeight: 600,
+              fontSize: 22,
+              letterSpacing: "0.5em",
               margin: 0,
+              paddingLeft: "0.5em",
               color: "#1a1c1b",
             }}
           >
-            いっぽ
+            TAMERU
           </h1>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              marginTop: 10,
-              padding: "6px 14px",
-              borderRadius: 999,
-              background: POP_COLORS[0].bg,
-              transform: "rotate(-3deg)",
-              boxShadow: "0 4px 10px rgba(232,161,0,0.25)",
-              fontFamily: POP_FONT,
-              fontSize: 13,
-              fontWeight: 700,
-              color: POP_COLORS[0].accent,
-            }}
-          >
-            ✦ {points.total.toLocaleString()} pt
-          </div>
         </div>
 
         {/* Home */}
