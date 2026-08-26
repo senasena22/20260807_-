@@ -42,6 +42,7 @@ const ACCENT_PRESETS = [
 // playful "pop" palette — Home page redesign trial
 const POP_FONT = "'Baloo 2', 'Nunito Sans', sans-serif";
 const POP_CTA = "#FF4D8D";
+const POP_SHADOW = "0 6px 18px rgba(26,28,27,0.10)";
 const POP_COLORS = [
   { bg: "#FFF0B8", accent: "#E8A100" }, // yellow
   { bg: "#FFD6E8", accent: "#FF4D8D" }, // pink
@@ -1530,7 +1531,7 @@ export default function StudyApp() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: page === "review" ? "32px 16px 60px" : "32px 16px 90px",
+        padding: page === "review" ? "32px 16px 60px" : "32px 16px 108px",
       }}
     >
       <link
@@ -1575,6 +1576,7 @@ export default function StudyApp() {
               borderRadius: 999,
               background: POP_COLORS[0].bg,
               transform: "rotate(-3deg)",
+              boxShadow: "0 4px 10px rgba(232,161,0,0.25)",
               fontFamily: POP_FONT,
               fontSize: 13,
               fontWeight: 700,
@@ -1603,12 +1605,15 @@ export default function StudyApp() {
               />
               <PopStar color={POP_COLORS[3].accent} size={20} style={{ top: -8, right: -2, transform: "rotate(12deg)" }} />
               <PopStar color={POP_COLORS[0].accent} size={13} style={{ top: 34, right: 74, transform: "rotate(-18deg)" }} />
-              <div style={{ position: "relative", fontFamily: POP_FONT, fontWeight: 800, fontSize: 36, lineHeight: 1.1, color: "#1a1c1b" }}>
+              <div style={{ position: "relative", fontFamily: POP_FONT, fontWeight: 800, fontSize: 40, lineHeight: 1.05, color: "#1a1c1b" }}>
                 こんにちは！
+              </div>
+              <div style={{ position: "relative", fontFamily: POP_FONT, fontWeight: 800, fontSize: 26, lineHeight: 1.15, color: POP_CTA }}>
+                今日も一歩ずつ。
               </div>
             </div>
             <div style={{ fontSize: 13, color: "#434842", marginBottom: 18, lineHeight: 1.6 }}>
-              今日も一歩ずつ進んでいきましょう。あなたのペースで大丈夫だよ。
+              あなたのペースで大丈夫だよ。
             </div>
 
             {backupDue && (
@@ -1618,6 +1623,7 @@ export default function StudyApp() {
                   borderRadius: 18,
                   padding: "12px 14px",
                   marginBottom: 18,
+                  boxShadow: POP_SHADOW,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -1650,19 +1656,19 @@ export default function StudyApp() {
             )}
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 18 }}>
-              <div style={{ background: POP_COLORS[3].bg, borderRadius: 18, padding: 12, textAlign: "center" }}>
+              <div style={{ background: POP_COLORS[3].bg, borderRadius: 18, padding: 12, textAlign: "center", boxShadow: POP_SHADOW }}>
                 <div style={{ fontSize: 11, color: "#1a1c1b", marginBottom: 2, fontWeight: 600 }}>連続</div>
                 <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 19, color: POP_COLORS[3].accent }}>
                   🔥 {streak}
                 </div>
               </div>
-              <div style={{ background: POP_COLORS[0].bg, borderRadius: 18, padding: 12, textAlign: "center" }}>
+              <div style={{ background: POP_COLORS[0].bg, borderRadius: 18, padding: 12, textAlign: "center", boxShadow: POP_SHADOW }}>
                 <div style={{ fontSize: 11, color: "#1a1c1b", marginBottom: 2, fontWeight: 600 }}>ポイント</div>
                 <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 19, color: POP_COLORS[0].accent }}>
                   ✦ {points.total}
                 </div>
               </div>
-              <div style={{ background: POP_COLORS[1].bg, borderRadius: 18, padding: 12, textAlign: "center" }}>
+              <div style={{ background: POP_COLORS[1].bg, borderRadius: 18, padding: 12, textAlign: "center", boxShadow: POP_SHADOW }}>
                 <div style={{ fontSize: 11, color: "#1a1c1b", marginBottom: 2, fontWeight: 600 }}>正解率</div>
                 <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 19, color: POP_COLORS[1].accent }}>
                   {overallAccuracy !== null ? `${overallAccuracy}%` : "-"}
@@ -1697,6 +1703,7 @@ export default function StudyApp() {
                 borderRadius: 22,
                 padding: 18,
                 marginBottom: 18,
+                boxShadow: `0 10px 24px ${POP_COLORS[2].accent}55`,
                 cursor: todayDueAcrossDecks > 0 ? "pointer" : "default",
                 display: "flex",
                 justifyContent: "space-between",
@@ -1747,7 +1754,7 @@ export default function StudyApp() {
                 return (
                   <div
                     key={val.key}
-                    style={{ position: "relative", background: pop.bg, borderRadius: 20, padding: 16 }}
+                    style={{ position: "relative", background: pop.bg, borderRadius: 20, padding: 16, boxShadow: POP_SHADOW }}
                   >
                     <div
                       style={{
@@ -1762,6 +1769,7 @@ export default function StudyApp() {
                         padding: "4px 9px",
                         borderRadius: 999,
                         transform: "rotate(6deg)",
+                        boxShadow: "0 3px 8px rgba(26,28,27,0.15)",
                       }}
                     >
                       {pct}%
@@ -1968,6 +1976,7 @@ export default function StudyApp() {
                     background: pop.bg,
                     borderRadius: 20,
                     padding: 14,
+                    boxShadow: POP_SHADOW,
                     cursor: "pointer",
                     display: "flex",
                     flexDirection: "column",
@@ -2389,25 +2398,25 @@ export default function StudyApp() {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div style={{ background: POP_COLORS[3].bg, borderRadius: 18, padding: 14, textAlign: "center" }}>
+              <div style={{ background: POP_COLORS[3].bg, borderRadius: 18, padding: 14, textAlign: "center", boxShadow: POP_SHADOW }}>
                 <div style={{ fontSize: 12, color: "#1a1c1b", marginBottom: 4, fontWeight: 600 }}>連続学習日数</div>
                 <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 22, color: POP_COLORS[3].accent }}>
                   🔥 {streak}
                 </div>
               </div>
-              <div style={{ background: POP_COLORS[0].bg, borderRadius: 18, padding: 14, textAlign: "center" }}>
+              <div style={{ background: POP_COLORS[0].bg, borderRadius: 18, padding: 14, textAlign: "center", boxShadow: POP_SHADOW }}>
                 <div style={{ fontSize: 12, color: "#1a1c1b", marginBottom: 4, fontWeight: 600 }}>新規定着カード</div>
                 <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 22, color: POP_COLORS[0].accent }}>
                   +{masteredInRange}
                 </div>
               </div>
-              <div style={{ background: POP_COLORS[1].bg, borderRadius: 18, padding: 14, textAlign: "center" }}>
+              <div style={{ background: POP_COLORS[1].bg, borderRadius: 18, padding: 14, textAlign: "center", boxShadow: POP_SHADOW }}>
                 <div style={{ fontSize: 12, color: "#1a1c1b", marginBottom: 4, fontWeight: 600 }}>平均正解率</div>
                 <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 22, color: POP_COLORS[1].accent }}>
                   {avgAccuracyInRange !== null ? `${avgAccuracyInRange}%` : "-"}
                 </div>
               </div>
-              <div style={{ background: POP_COLORS[2].bg, borderRadius: 18, padding: 14, textAlign: "center" }}>
+              <div style={{ background: POP_COLORS[2].bg, borderRadius: 18, padding: 14, textAlign: "center", boxShadow: POP_SHADOW }}>
                 <div style={{ fontSize: 12, color: "#1a1c1b", marginBottom: 4, fontWeight: 600 }}>テスト実施回数</div>
                 <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 22, color: POP_COLORS[2].accent }}>
                   {testsInRange.length}
@@ -3472,14 +3481,17 @@ export default function StudyApp() {
         <div
           style={{
             position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
+            bottom: "calc(14px + env(safe-area-inset-bottom))",
+            left: 16,
+            right: 16,
+            maxWidth: 408,
+            margin: "0 auto",
             background: "#FFFFFF",
-            borderTop: "1px solid #E5E2DC",
+            borderRadius: 999,
+            boxShadow: "0 10px 28px rgba(26,28,27,0.16)",
             display: "flex",
             justifyContent: "space-around",
-            padding: "8px 0 calc(8px + env(safe-area-inset-bottom))",
+            padding: "8px 6px",
             zIndex: 10,
           }}
         >
@@ -3501,15 +3513,33 @@ export default function StudyApp() {
                   gap: 2,
                   border: "none",
                   background: "transparent",
-                  color: active ? "#E8A93C" : "#747872",
                   cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: "4px 12px",
+                  padding: "2px 10px",
                 }}
               >
-                <Icon size={20} />
-                {label}
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: "50%",
+                    background: active ? POP_CTA : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Icon size={18} color={active ? "#fff" : "#9A9488"} />
+                </div>
+                <span
+                  style={{
+                    fontFamily: POP_FONT,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: active ? POP_CTA : "#9A9488",
+                  }}
+                >
+                  {label}
+                </span>
               </button>
             );
           })}
