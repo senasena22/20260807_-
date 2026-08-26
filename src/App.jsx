@@ -1539,7 +1539,7 @@ export default function StudyApp() {
     >
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,600&family=Baloo+2:wght@500;600;700;800&family=Jost:wght@500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,600&family=Baloo+2:wght@500;600;700;800&family=Jost:wght@500;600;700&family=Quicksand:wght@600;700&display=swap"
       />
 
       <div style={{ width: "100%", maxWidth: 440 }}>
@@ -1547,8 +1547,8 @@ export default function StudyApp() {
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <h1
             style={{
-              fontFamily: "'Futura', 'Jost', sans-serif",
-              fontWeight: 600,
+              fontFamily: "'Quicksand', sans-serif",
+              fontWeight: 700,
               fontSize: 22,
               letterSpacing: "0.5em",
               margin: 0,
