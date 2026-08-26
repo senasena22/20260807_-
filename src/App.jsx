@@ -2057,9 +2057,10 @@ export default function StudyApp() {
 
         {page === "goals" && (
           <div style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-            {decks.map((val) => {
+            {decks.map((val, i) => {
               const active = val.key === domain;
               const TIcon = DECK_ICONS[val.iconKey] || BookOpen;
+              const pop = POP_COLORS[i % POP_COLORS.length];
               return (
                 <button
                   key={val.key}
@@ -2072,10 +2073,12 @@ export default function StudyApp() {
                     gap: 6,
                     padding: "8px 14px",
                     borderRadius: 999,
-                    border: active ? `2px solid ${val.accent}` : "1px solid #E5E2DC",
-                    background: active ? val.accentSoft : "#FFFFFF",
-                    color: active ? val.accent : "#434842",
-                    fontWeight: 600,
+                    border: "none",
+                    background: active ? pop.bg : "#FFFFFF",
+                    boxShadow: active ? POP_SHADOW : "none",
+                    color: active ? pop.accent : "#9A9488",
+                    fontFamily: POP_FONT,
+                    fontWeight: 700,
                     fontSize: 13,
                     cursor: "pointer",
                     whiteSpace: "nowrap",
@@ -2091,7 +2094,7 @@ export default function StudyApp() {
 
         {/* Exam countdown */}
         {page === "goals" && (
-          <div style={{ textAlign: "center", marginBottom: 10 }}>
+          <div style={{ textAlign: "center", marginBottom: 14 }}>
             {editingExamDate ? (
               <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
                 <input
@@ -2100,7 +2103,7 @@ export default function StudyApp() {
                   onChange={(e) => setExamDateInput(e.target.value)}
                   style={{ ...inputStyle, width: "auto", padding: "6px 8px", fontSize: 13 }}
                 />
-                <button onClick={saveExamDate} style={smallLinkButtonStyle(d.accent)}>
+                <button onClick={saveExamDate} style={smallLinkButtonStyle(POP_CTA)}>
                   保存
                 </button>
                 {examDates[domain] && (
@@ -2113,16 +2116,43 @@ export default function StudyApp() {
                 </button>
               </div>
             ) : examDates[domain] ? (
-              <div style={{ fontSize: 12, color: d.accent, fontWeight: 600 }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: POP_COLORS[2].bg,
+                  color: POP_COLORS[2].accent,
+                  fontFamily: POP_FONT,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  padding: "8px 14px",
+                  borderRadius: 999,
+                  boxShadow: POP_SHADOW,
+                }}
+              >
                 {daysUntil(examDates[domain]) >= 0
                   ? `🎯 試験まであと${daysUntil(examDates[domain])}日（${examDates[domain]}）`
-                  : "🎯 試験日を過ぎてるよ"}{" "}
+                  : "🎯 試験日を過ぎてるよ"}
                 <button onClick={openExamDateEditor} style={smallLinkButtonStyle("#747872")}>
                   変更
                 </button>
               </div>
             ) : (
-              <button onClick={openExamDateEditor} style={smallLinkButtonStyle(d.accent, true)}>
+              <button
+                onClick={openExamDateEditor}
+                style={{
+                  border: "none",
+                  background: POP_COLORS[2].bg,
+                  color: POP_COLORS[2].accent,
+                  fontFamily: POP_FONT,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  padding: "10px 16px",
+                  borderRadius: 999,
+                  cursor: "pointer",
+                }}
+              >
                 🎯 {d.label}の試験日を設定する
               </button>
             )}
@@ -2133,14 +2163,14 @@ export default function StudyApp() {
         {page === "goals" && (
           <div
             style={{
-              background: "#FFFFFF",
-              borderRadius: 16,
+              background: POP_COLORS[3].bg,
+              borderRadius: 20,
               padding: 16,
               marginBottom: 14,
-              border: `1px solid ${d.accentSoft}`,
+              boxShadow: POP_SHADOW,
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#434842", marginBottom: 10 }}>📖 教材の進み具合</div>
+            <div style={{ fontFamily: POP_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 10 }}>📖 教材の進み具合</div>
             {editingMaterial ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input
@@ -2195,11 +2225,11 @@ export default function StudyApp() {
                     style={{
                       flex: 2,
                       padding: "10px 0",
-                      borderRadius: 8,
+                      borderRadius: 999,
                       border: "none",
-                      background: d.accent,
+                      background: POP_CTA,
                       color: "#fff",
-                      fontWeight: 600,
+                      fontWeight: 700,
                       fontSize: 13,
                       cursor: "pointer",
                     }}
@@ -2215,25 +2245,25 @@ export default function StudyApp() {
               </div>
             ) : material ? (
               <div>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{material.name}</div>
-                <div style={{ fontSize: 12, color: "#434842", marginTop: 4 }}>
+                <div style={{ fontFamily: POP_FONT, fontWeight: 700, fontSize: 15 }}>{material.name}</div>
+                <div style={{ fontSize: 12, color: "#1a1c1b", marginTop: 4 }}>
                   {material.currentUnit} / {material.totalUnits}（残り{materialRemaining}）
                 </div>
-                <div style={{ height: 8, background: "#e9e2d4", borderRadius: 4, marginTop: 8, overflow: "hidden" }}>
+                <div style={{ height: 8, background: "rgba(255,255,255,0.7)", borderRadius: 4, marginTop: 8, overflow: "hidden" }}>
                   <div
                     style={{
                       height: "100%",
                       width: `${material.totalUnits > 0 ? Math.min(100, (material.currentUnit / material.totalUnits) * 100) : 0}%`,
-                      background: d.accent,
+                      background: POP_COLORS[3].accent,
                     }}
                   />
                 </div>
                 {materialRemaining > 0 ? (
-                  <div style={{ fontSize: 12, color: "#434842", marginTop: 10 }}>
+                  <div style={{ fontSize: 12, color: "#1a1c1b", marginTop: 10 }}>
                     このペースだと <strong>{materialFinishDate}</strong> ごろ完了予定
                   </div>
                 ) : (
-                  <div style={{ fontSize: 12, color: d.accent, fontWeight: 600, marginTop: 10 }}>一周完了です！🎉</div>
+                  <div style={{ fontSize: 12, color: POP_COLORS[3].accent, fontWeight: 700, marginTop: 10 }}>一周完了です！🎉</div>
                 )}
                 {materialRemaining === 0 && (
                   <button
@@ -2242,11 +2272,11 @@ export default function StudyApp() {
                       marginTop: 10,
                       width: "100%",
                       padding: "8px 0",
-                      borderRadius: 8,
+                      borderRadius: 999,
                       border: "none",
-                      background: d.accent,
+                      background: POP_CTA,
                       color: "#fff",
-                      fontWeight: 600,
+                      fontWeight: 700,
                       fontSize: 13,
                       cursor: "pointer",
                     }}
@@ -2259,8 +2289,8 @@ export default function StudyApp() {
                     style={{
                       fontSize: 12,
                       marginTop: 6,
-                      color: materialBuffer >= 0 ? d.accent : "#B0483A",
-                      fontWeight: 600,
+                      color: materialBuffer >= 0 ? POP_COLORS[3].accent : "#B0483A",
+                      fontWeight: 700,
                     }}
                   >
                     {materialBuffer >= 0
@@ -2275,11 +2305,11 @@ export default function StudyApp() {
                     style={{
                       flex: 1,
                       padding: "8px 0",
-                      borderRadius: 8,
+                      borderRadius: 999,
                       border: "none",
-                      background: materialRemaining === 0 ? "#e9e2d4" : d.accentSoft,
-                      color: materialRemaining === 0 ? "#747872" : d.accent,
-                      fontWeight: 600,
+                      background: materialRemaining === 0 ? "rgba(255,255,255,0.7)" : "#FFFFFF",
+                      color: materialRemaining === 0 ? "#9A9488" : POP_COLORS[3].accent,
+                      fontWeight: 700,
                       fontSize: 13,
                       cursor: materialRemaining === 0 ? "default" : "pointer",
                     }}
@@ -2291,11 +2321,11 @@ export default function StudyApp() {
                     style={{
                       flex: 1,
                       padding: "8px 0",
-                      borderRadius: 8,
-                      border: "1px solid #E5E2DC",
-                      background: "transparent",
-                      color: "#434842",
-                      fontWeight: 600,
+                      borderRadius: 999,
+                      border: "none",
+                      background: "rgba(255,255,255,0.6)",
+                      color: "#1a1c1b",
+                      fontWeight: 700,
                       fontSize: 13,
                       cursor: "pointer",
                     }}
@@ -2305,7 +2335,20 @@ export default function StudyApp() {
                 </div>
               </div>
             ) : (
-              <button onClick={openMaterialEditor} style={smallLinkButtonStyle(d.accent, true)}>
+              <button
+                onClick={openMaterialEditor}
+                style={{
+                  border: "none",
+                  background: "#FFFFFF",
+                  color: POP_COLORS[3].accent,
+                  fontFamily: POP_FONT,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  padding: "10px 16px",
+                  borderRadius: 999,
+                  cursor: "pointer",
+                }}
+              >
                 📖 教材を登録する
               </button>
             )}
@@ -2317,13 +2360,13 @@ export default function StudyApp() {
           <div
             style={{
               background: "#FFFFFF",
-              borderRadius: 16,
+              borderRadius: 20,
               padding: 16,
               marginBottom: 14,
-              border: `1px solid ${d.accentSoft}`,
+              boxShadow: POP_SHADOW,
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#434842", marginBottom: 10 }}>📚 読了リスト</div>
+            <div style={{ fontFamily: POP_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 10 }}>📚 読了リスト</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {completedMaterials
                 .filter((x) => x.deckKey === domain)
@@ -2577,22 +2620,22 @@ export default function StudyApp() {
           <div
             style={{
               background: "#FFFFFF",
-              borderRadius: 16,
+              borderRadius: 20,
               padding: 16,
               marginBottom: 14,
-              border: `1px solid ${d.accentSoft}`,
+              boxShadow: POP_SHADOW,
             }}
           >
             <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-              <div style={{ flex: 1, textAlign: "center", background: "#F7F4EE", borderRadius: 12, padding: "12px 8px" }}>
+              <div style={{ flex: 1, textAlign: "center", background: POP_COLORS[3].bg, borderRadius: 16, padding: "12px 8px" }}>
                 <div style={{ fontSize: 20 }}>🔥</div>
-                <div style={{ fontWeight: 800, fontSize: 16, color: "#4e604f" }}>{streak}日</div>
-                <div style={{ fontSize: 11, color: "#747872" }}>現在の連続</div>
+                <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 16, color: POP_COLORS[3].accent }}>{streak}日</div>
+                <div style={{ fontSize: 11, color: "#1a1c1b", fontWeight: 600 }}>現在の連続</div>
               </div>
-              <div style={{ flex: 1, textAlign: "center", background: "#F7F4EE", borderRadius: 12, padding: "12px 8px" }}>
+              <div style={{ flex: 1, textAlign: "center", background: POP_COLORS[0].bg, borderRadius: 16, padding: "12px 8px" }}>
                 <div style={{ fontSize: 20 }}>🏆</div>
-                <div style={{ fontWeight: 800, fontSize: 16, color: "#4e604f" }}>{longestStreak}日</div>
-                <div style={{ fontSize: 11, color: "#747872" }}>最長連続記録</div>
+                <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 16, color: POP_COLORS[0].accent }}>{longestStreak}日</div>
+                <div style={{ fontSize: 11, color: "#1a1c1b", fontWeight: 600 }}>最長連続記録</div>
               </div>
             </div>
 
@@ -2604,7 +2647,7 @@ export default function StudyApp() {
               >
                 <ChevronLeft size={18} />
               </button>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>
+              <div style={{ fontFamily: POP_FONT, fontWeight: 700, fontSize: 16 }}>
                 {calendarMonth.year}年{calendarMonth.month + 1}月
               </div>
               <button
