@@ -39,6 +39,16 @@ const ACCENT_PRESETS = [
   { accent: "#4F5E66", accentSoft: "#E4E9EB" },
 ];
 
+// playful "pop" palette — Home page redesign trial
+const POP_FONT = "'Baloo 2', 'Nunito Sans', sans-serif";
+const POP_CTA = "#FF4D8D";
+const POP_COLORS = [
+  { bg: "#FFF0B8", accent: "#E8A100" }, // yellow
+  { bg: "#FFD6E8", accent: "#FF4D8D" }, // pink
+  { bg: "#E3D7FF", accent: "#8352E0" }, // purple
+  { bg: "#C9F5DE", accent: "#12A05F" }, // mint
+];
+
 const BUILTIN_DECKS = [
   { key: "korean", label: "韓国語", accent: "#3A5A54", accentSoft: "#E4EBE8", iconKey: "languages", schema: "korean", builtin: true },
   { key: "wine", label: "ワイン試験", accent: "#6B1F2E", accentSoft: "#F0E3E5", iconKey: "wine", schema: "wine", builtin: true },
@@ -1525,7 +1535,7 @@ export default function StudyApp() {
     >
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,600&family=Baloo+2:wght@500;600;700;800&display=swap"
       />
 
       <div style={{ width: "100%", maxWidth: 440 }}>
@@ -1577,28 +1587,41 @@ export default function StudyApp() {
         {/* Home */}
         {page === "home" && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 22, marginBottom: 6 }}>
-              こんにちは！
+            <div style={{ position: "relative", marginBottom: 18 }}>
+              <div
+                style={{
+                  position: "absolute",
+                  top: -6,
+                  right: 8,
+                  width: 34,
+                  height: 34,
+                  borderRadius: "38% 62% 63% 37% / 41% 44% 56% 59%",
+                  background: POP_COLORS[1].bg,
+                  zIndex: 0,
+                }}
+              />
+              <div style={{ position: "relative", fontFamily: POP_FONT, fontWeight: 800, fontSize: 30, color: "#1a1c1b" }}>
+                こんにちは！
+              </div>
             </div>
-            <div style={{ fontSize: 13, color: "#434842", marginBottom: 16, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: "#434842", marginBottom: 18, lineHeight: 1.6 }}>
               今日も一歩ずつ進んでいきましょう。あなたのペースで大丈夫だよ。
             </div>
 
             {backupDue && (
               <div
                 style={{
-                  background: "#FFF8E8",
-                  border: "1px solid #E8A93C",
-                  borderRadius: 12,
+                  background: POP_COLORS[0].bg,
+                  borderRadius: 18,
                   padding: "12px 14px",
-                  marginBottom: 16,
+                  marginBottom: 18,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   gap: 10,
                 }}
               >
-                <div style={{ fontSize: 12, color: "#434842", lineHeight: 1.5 }}>
+                <div style={{ fontSize: 12, color: "#1a1c1b", lineHeight: 1.5, fontWeight: 600 }}>
                   💾{" "}
                   {backupMeta.lastExportedAt
                     ? `最後のバックアップから${daysSinceLastBackup}日経ったよ`
@@ -1609,12 +1632,12 @@ export default function StudyApp() {
                   style={{
                     flexShrink: 0,
                     border: "none",
-                    background: "#E8A93C",
-                    color: "#1a1c1b",
+                    background: POP_COLORS[0].accent,
+                    color: "#fff",
                     fontWeight: 700,
                     fontSize: 12,
-                    padding: "8px 12px",
-                    borderRadius: 8,
+                    padding: "8px 14px",
+                    borderRadius: 999,
                     cursor: "pointer",
                   }}
                 >
@@ -1623,22 +1646,22 @@ export default function StudyApp() {
               </div>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
-              <div style={{ background: "#FFFFFF", borderRadius: 14, padding: 12, border: "1px solid #E5E2DC", textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: "#747872", marginBottom: 2 }}>連続</div>
-                <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 18, color: "#4e604f" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 18 }}>
+              <div style={{ background: POP_COLORS[3].bg, borderRadius: 18, padding: 12, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#1a1c1b", marginBottom: 2, fontWeight: 600 }}>連続</div>
+                <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 19, color: POP_COLORS[3].accent }}>
                   🔥 {streak}
                 </div>
               </div>
-              <div style={{ background: "#FFFFFF", borderRadius: 14, padding: 12, border: "1px solid #E5E2DC", textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: "#747872", marginBottom: 2 }}>ポイント</div>
-                <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 18, color: "#E8A93C" }}>
+              <div style={{ background: POP_COLORS[0].bg, borderRadius: 18, padding: 12, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#1a1c1b", marginBottom: 2, fontWeight: 600 }}>ポイント</div>
+                <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 19, color: POP_COLORS[0].accent }}>
                   ✦ {points.total}
                 </div>
               </div>
-              <div style={{ background: "#FFFFFF", borderRadius: 14, padding: 12, border: "1px solid #E5E2DC", textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: "#747872", marginBottom: 2 }}>正解率</div>
-                <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 800, fontSize: 18, color: "#4e604f" }}>
+              <div style={{ background: POP_COLORS[1].bg, borderRadius: 18, padding: 12, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#1a1c1b", marginBottom: 2, fontWeight: 600 }}>正解率</div>
+                <div style={{ fontFamily: POP_FONT, fontWeight: 800, fontSize: 19, color: POP_COLORS[1].accent }}>
                   {overallAccuracy !== null ? `${overallAccuracy}%` : "-"}
                 </div>
               </div>
@@ -1651,11 +1674,11 @@ export default function StudyApp() {
               style={{
                 display: "block",
                 textAlign: "center",
-                marginTop: -8,
-                marginBottom: 16,
+                marginTop: -10,
+                marginBottom: 18,
                 fontSize: 12,
-                fontWeight: 600,
-                color: "#E8A93C",
+                fontWeight: 700,
+                color: POP_CTA,
                 textDecoration: "none",
               }}
             >
@@ -1665,11 +1688,10 @@ export default function StudyApp() {
             <div
               onClick={todayDueAcrossDecks > 0 ? goToTodayGoal : undefined}
               style={{
-                background: "#FFFFFF",
-                borderRadius: 16,
+                background: POP_COLORS[2].bg,
+                borderRadius: 22,
                 padding: 18,
-                border: "1px solid #E5E2DC",
-                marginBottom: 16,
+                marginBottom: 18,
                 cursor: todayDueAcrossDecks > 0 ? "pointer" : "default",
                 display: "flex",
                 justifyContent: "space-between",
@@ -1678,54 +1700,57 @@ export default function StudyApp() {
               }}
             >
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#434842", marginBottom: 6 }}>今日の目標</div>
-                <div style={{ fontSize: 13, color: "#747872" }}>
+                <div style={{ fontFamily: POP_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 6 }}>
+                  今日の目標
+                </div>
+                <div style={{ fontSize: 13, color: "#434842" }}>
                   {todayDueAcrossDecks > 0 ? `今日は${todayDueAcrossDecks}枚の復習があるよ` : "今日の復習はもう終わってるよ、えらい！"}
                 </div>
               </div>
               {todayDueAcrossDecks > 0 && (
-                <div style={{ color: "#E8A93C", fontSize: 20, flexShrink: 0 }}>›</div>
+                <div style={{ color: POP_COLORS[2].accent, fontSize: 22, fontWeight: 800, flexShrink: 0 }}>›</div>
               )}
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#434842" }}>学習の続きから</div>
+              <div style={{ fontFamily: POP_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b" }}>学習の続きから</div>
               <button
                 onClick={() => setPage("library")}
-                style={{ border: "none", background: "transparent", color: d.accent, fontWeight: 600, fontSize: 12, cursor: "pointer" }}
+                style={{ border: "none", background: "transparent", color: POP_CTA, fontWeight: 700, fontSize: 12, cursor: "pointer" }}
               >
                 すべて見る
               </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 12 }}>
-              {decks.map((val) => {
+              {decks.map((val, i) => {
                 const TIcon = DECK_ICONS[val.iconKey] || BookOpen;
                 const total = deckTotalCards(val.key);
                 const mastered = deckMasteredCards(val.key);
+                const pop = POP_COLORS[i % POP_COLORS.length];
                 return (
                   <div
                     key={val.key}
-                    style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #E5E2DC" }}
+                    style={{ background: pop.bg, borderRadius: 20, padding: 16 }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                       <div
                         style={{
                           width: 40,
                           height: 40,
-                          borderRadius: 10,
-                          background: val.accentSoft,
+                          borderRadius: 12,
+                          background: "#FFFFFF",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          color: val.accent,
+                          color: pop.accent,
                           flexShrink: 0,
                         }}
                       >
                         <TIcon size={20} />
                       </div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{val.label}</div>
-                        <div style={{ fontSize: 12, color: "#747872" }}>
+                        <div style={{ fontFamily: POP_FONT, fontWeight: 700, fontSize: 15, color: "#1a1c1b" }}>{val.label}</div>
+                        <div style={{ fontSize: 12, color: "#434842" }}>
                           定着 {mastered}/{total}枚
                         </div>
                       </div>
@@ -1734,11 +1759,11 @@ export default function StudyApp() {
                       onClick={() => openDeckReview(val.key)}
                       style={{
                         width: "100%",
-                        padding: "10px 0",
-                        borderRadius: 8,
+                        padding: "11px 0",
+                        borderRadius: 999,
                         border: "none",
-                        background: "#E8A93C",
-                        color: "#1a1c1b",
+                        background: POP_CTA,
+                        color: "#fff",
                         fontWeight: 700,
                         fontSize: 13,
                         cursor: "pointer",
@@ -1755,8 +1780,8 @@ export default function StudyApp() {
                   openDeckForm();
                 }}
                 style={{
-                  border: "1.5px dashed #747872",
-                  borderRadius: 16,
+                  border: "2px dashed #C9C2B4",
+                  borderRadius: 20,
                   background: "transparent",
                   display: "flex",
                   alignItems: "center",
@@ -1768,7 +1793,7 @@ export default function StudyApp() {
                 }}
               >
                 <Plus size={18} />
-                <span style={{ fontSize: 13, fontWeight: 600 }}>新しいデッキ</span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>新しいデッキ</span>
               </div>
             </div>
           </div>
