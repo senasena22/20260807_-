@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Flame, Plus, List, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -186,6 +186,75 @@ function findDuplicateCard(deck, domain, field, value, excludeId) {
     (c) => c.domain === domain && c.id !== excludeId && (c[field] || "").trim() === target
   );
 }
+
+// Minimal CSV parser: handles quoted fields (with embedded commas/newlines) and "" escapes.
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  const pushField = () => {
+    row.push(field);
+    field = "";
+  };
+  const pushRow = () => {
+    pushField();
+    rows.push(row);
+    row = [];
+  };
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ",") {
+      pushField();
+    } else if (c === "\n") {
+      pushRow();
+    } else if (c === "\r") {
+      // ignore, \n (or end of input) handles the row break
+    } else {
+      field += c;
+    }
+  }
+  if (field !== "" || row.length > 0) pushRow();
+  return rows.filter((r) => r.some((v) => v.trim() !== ""));
+}
+
+const CSV_SCHEMA_COLUMNS = {
+  korean: [
+    { key: "ko", header: "韓国語", required: true },
+    { key: "meaning", header: "意味", required: true },
+    { key: "romanized", header: "ローマ字", required: false },
+    { key: "rule", header: "発音ルール", required: false },
+    { key: "source", header: "出典", required: false },
+  ],
+  wine: [
+    { key: "q", header: "質問", required: true },
+    { key: "a", header: "解答", required: true },
+    { key: "region", header: "産地", required: false },
+    { key: "topic", header: "トピック", required: false },
+    { key: "hypothesis", header: "仮説", required: false },
+    { key: "source", header: "出典", required: false },
+  ],
+  generic: [
+    { key: "front", header: "表面", required: true },
+    { key: "back", header: "裏面", required: true },
+    { key: "source", header: "出典", required: false },
+  ],
+};
+
+const CSV_PRIMARY_FIELD = { korean: "ko", wine: "q", generic: "front" };
 
 // box: 0 = new/due now, 1〜5 = how many successful reviews in a row. dueAt: "YYYY-MM-DD", the next date this card should resurface.
 function initDeck() {
@@ -395,6 +464,8 @@ export default function StudyApp() {
 
   const [showInput, setShowInput] = useState(false);
   const [showList, setShowList] = useState(false);
+  const [csvPreview, setCsvPreview] = useState(null);
+  const csvFileInputRef = useRef(null);
   const [koreanForm, setKoreanForm] = useState(EMPTY_KOREAN_FORM);
   const [wineForm, setWineForm] = useState(EMPTY_WINE_FORM);
   const [genericForm, setGenericForm] = useState(EMPTY_GENERIC_FORM);
@@ -540,6 +611,96 @@ export default function StudyApp() {
     }
     setFormError("");
     setShowInput(false);
+  };
+
+  const handleCsvFile = async (file) => {
+    const schema = d.schema;
+    const text = await file.text();
+    const rows = parseCSV(text);
+    if (rows.length === 0) {
+      setCsvPreview({ error: "CSVが空だったよ。" });
+      return;
+    }
+    const columns = CSV_SCHEMA_COLUMNS[schema];
+    const header = rows[0].map((h) => h.trim());
+    const colIndex = {};
+    columns.forEach((col) => {
+      colIndex[col.key] = header.findIndex((h) => h === col.header);
+    });
+    const missingRequired = columns.filter((c) => c.required && colIndex[c.key] === -1);
+    if (missingRequired.length > 0) {
+      setCsvPreview({
+        error: `1行目（見出し）に必須の列が見つからないよ: ${missingRequired.map((c) => c.header).join("、")}`,
+      });
+      return;
+    }
+    const primaryKey = CSV_PRIMARY_FIELD[schema];
+    const seenInBatch = new Set();
+    const parsedRows = rows.slice(1).map((r) => {
+      const values = {};
+      columns.forEach((col) => {
+        values[col.key] = colIndex[col.key] === -1 ? "" : (r[colIndex[col.key]] || "").trim();
+      });
+      const missing = columns.filter((c) => c.required && !values[c.key]);
+      let status = "ok";
+      let note = "";
+      if (missing.length > 0) {
+        status = "invalid";
+        note = `${missing.map((c) => c.header).join("・")}が空`;
+      } else if (findDuplicateCard(deck, domain, primaryKey, values[primaryKey])) {
+        status = "dup";
+        note = "登録済み";
+      } else if (seenInBatch.has(values[primaryKey])) {
+        status = "dup";
+        note = "CSV内で重複";
+      } else {
+        seenInBatch.add(values[primaryKey]);
+      }
+      return { values, status, note };
+    });
+    setCsvPreview({ schema, rows: parsedRows });
+  };
+
+  const confirmCsvImport = () => {
+    if (!csvPreview || csvPreview.error) return;
+    const okRows = csvPreview.rows.filter((r) => r.status === "ok");
+    if (okRows.length > 0) {
+      const today = todayStr();
+      const newEntries = {};
+      const newIds = [];
+      okRows.forEach((r) => {
+        const id = newCardId();
+        const v = r.values;
+        let card;
+        if (csvPreview.schema === "korean") {
+          card = { ko: v.ko, romanized: v.romanized, meaning: v.meaning, rule: v.rule || "特になし", source: v.source };
+        } else if (csvPreview.schema === "wine") {
+          card = { q: v.q, a: v.a, region: v.region || "-", topic: v.topic || "その他", hypothesis: v.hypothesis, source: v.source };
+        } else {
+          card = { front: v.front, back: v.back, source: v.source };
+        }
+        newEntries[id] = {
+          ...card,
+          frontImage: "",
+          backImage: "",
+          id,
+          domain,
+          box: 0,
+          interval: 0,
+          dueAt: today,
+          seen: 0,
+          correct: 0,
+          createdAt: new Date().toISOString(),
+        };
+        newIds.push(id);
+      });
+      setDeck((prev) => ({ ...prev, ...newEntries }));
+      setSessionQueue((q) => [...q, ...newIds]);
+      setQueueIdx(0);
+      setSessionDone(false);
+      setPoints((p) => ({ ...p, total: p.total + newIds.length * 2 }));
+    }
+    setCsvPreview(null);
   };
 
   const openEditCard = (card) => {
@@ -2316,7 +2477,8 @@ export default function StudyApp() {
         {/* Add today's learning */}
         {!testMode && (
         <div style={{ marginBottom: 20 }}>
-          {!showInput && !showList ? (
+          {!showInput && !showList && !csvPreview ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", gap: 8 }}>
               <button
                 onClick={() => {
@@ -2389,6 +2551,140 @@ export default function StudyApp() {
                 <Target size={16} />
                 テスト
               </button>
+            </div>
+            <button
+              onClick={() => csvFileInputRef.current?.click()}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                padding: "10px 0",
+                borderRadius: 8,
+                border: "1.5px solid #E5E2DC",
+                background: "transparent",
+                color: "#747872",
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: "pointer",
+              }}
+            >
+              <Upload size={14} />
+              CSVから読み込む
+            </button>
+            <input
+              ref={csvFileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file) handleCsvFile(file);
+                e.target.value = "";
+              }}
+            />
+            </div>
+          ) : csvPreview ? (
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: 16,
+                padding: 16,
+                border: `1px solid ${d.accentSoft}`,
+              }}
+            >
+              {csvPreview.error ? (
+                <>
+                  <div style={{ fontSize: 13, color: "#B0483A", marginBottom: 12 }}>{csvPreview.error}</div>
+                  <button
+                    onClick={() => setCsvPreview(null)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 0",
+                      borderRadius: 8,
+                      border: "1.5px solid #E5E2DC",
+                      background: "transparent",
+                      color: "#434842",
+                      fontWeight: 600,
+                      fontSize: 14,
+                      cursor: "pointer",
+                    }}
+                  >
+                    閉じる
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#434842", marginBottom: 10 }}>
+                    CSVプレビュー（{csvPreview.rows.filter((r) => r.status === "ok").length}/{csvPreview.rows.length}件を登録できるよ）
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto", marginBottom: 12 }}>
+                    {csvPreview.rows.map((r, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 8,
+                          padding: "8px 12px",
+                          borderRadius: 8,
+                          background: "#F7F4EE",
+                        }}
+                      >
+                        <div style={{ fontSize: 13, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {r.values[CSV_PRIMARY_FIELD[csvPreview.schema]] || "(空)"}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            flexShrink: 0,
+                            color: r.status === "ok" ? d.accent : "#B0483A",
+                          }}
+                        >
+                          {r.status === "ok" ? "OK" : r.note}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => setCsvPreview(null)}
+                      style={{
+                        flex: 1,
+                        padding: "10px 0",
+                        borderRadius: 8,
+                        border: "1.5px solid #E5E2DC",
+                        background: "transparent",
+                        color: "#434842",
+                        fontWeight: 600,
+                        fontSize: 14,
+                        cursor: "pointer",
+                      }}
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      onClick={confirmCsvImport}
+                      disabled={csvPreview.rows.filter((r) => r.status === "ok").length === 0}
+                      style={{
+                        flex: 1,
+                        padding: "10px 0",
+                        borderRadius: 8,
+                        border: "none",
+                        background: csvPreview.rows.filter((r) => r.status === "ok").length === 0 ? "#C9C2B4" : d.accent,
+                        color: "#fff",
+                        fontWeight: 600,
+                        fontSize: 14,
+                        cursor: csvPreview.rows.filter((r) => r.status === "ok").length === 0 ? "default" : "pointer",
+                      }}
+                    >
+                      {csvPreview.rows.filter((r) => r.status === "ok").length}件を登録する
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ) : showList ? (
             <div
