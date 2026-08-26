@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
-        name: 'いっぽ',
-        short_name: 'いっぽ',
-        description: '毎日ひとつずつ積み上げるSRS(間隔反復)復習アプリ',
+        name: 'TAMERU',
+        short_name: 'TAMERU',
+        description: '小さな学びを、ちゃんとためる。',
         lang: 'ja',
         start_url: '.',
         scope: '.',
