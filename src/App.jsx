@@ -67,6 +67,7 @@ const COMPLETED_MATERIALS_STORAGE_KEY = "study-srs.completedMaterials.v1";
 const BACKUP_STORAGE_KEY = "study-srs.backupMeta.v1";
 const SYNC_CODE_STORAGE_KEY = "study-srs.syncCode.v1";
 const SYNC_API_BASE = "https://study-app.senashinjo22.workers.dev/api/sync";
+const USER_NAME_STORAGE_KEY = "study-srs.userName.v1";
 
 const ALL_STORAGE_KEYS = [
   DECK_STORAGE_KEY,
@@ -78,6 +79,7 @@ const ALL_STORAGE_KEYS = [
   POINTS_STORAGE_KEY,
   COMPLETED_MATERIALS_STORAGE_KEY,
   BACKUP_STORAGE_KEY,
+  USER_NAME_STORAGE_KEY,
 ];
 
 // days until next review after each successful box level (box 1〜5)
@@ -532,6 +534,8 @@ export default function StudyApp() {
   const [syncCodeInput, setSyncCodeInput] = useState(() => localStorage.getItem(SYNC_CODE_STORAGE_KEY) || "");
   const [syncBusy, setSyncBusy] = useState(false);
   const [syncMessage, setSyncMessage] = useState("");
+  const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_STORAGE_KEY) || "");
+  const [userNameInput, setUserNameInput] = useState(() => localStorage.getItem(USER_NAME_STORAGE_KEY) || "");
 
   const [stats, setStats] = useState(loadStats);
   const [testMode, setTestMode] = useState(false);
@@ -1380,6 +1384,12 @@ export default function StudyApp() {
     }
   };
 
+  const handleSaveUserName = () => {
+    const trimmed = userNameInput.trim();
+    localStorage.setItem(USER_NAME_STORAGE_KEY, trimmed);
+    setUserName(trimmed);
+  };
+
   const handleShare = async () => {
     try {
       const canvas = await generateShareImage({
@@ -1612,7 +1622,7 @@ export default function StudyApp() {
         {page === "home" && (
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontFamily: BRAND_FONT, fontWeight: 700, fontSize: 22, color: "#33362F", marginBottom: 6 }}>
-              {getGreeting()}
+              {getGreeting()}{userName ? `、${userName}さん` : ""}
             </div>
             <div style={{ fontSize: 13, color: "#7A7A70", marginBottom: 24, lineHeight: 1.6 }}>
               {getReassuranceMessage()}
@@ -2457,6 +2467,38 @@ export default function StudyApp() {
               >
                 📤 進捗をシェア
               </button>
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: BRAND_SHADOW, marginTop: 14 }}>
+              <div style={{ fontFamily: BRAND_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 4 }}>👤 お名前</div>
+              <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
+                設定すると、ホームの挨拶で呼びかけます。空欄のままでもOKです。
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  value={userNameInput}
+                  onChange={(e) => setUserNameInput(e.target.value)}
+                  placeholder="お名前"
+                  style={{ ...inputStyle, flex: 1, width: "auto" }}
+                />
+                <button
+                  onClick={handleSaveUserName}
+                  style={{
+                    padding: "0 16px",
+                    borderRadius: 999,
+                    border: "none",
+                    background: BRAND_TONES[1].bg,
+                    color: BRAND_TONES[1].accent,
+                    fontFamily: BRAND_FONT,
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  保存
+                </button>
+              </div>
             </div>
 
             <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: BRAND_SHADOW, marginTop: 14 }}>
