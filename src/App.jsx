@@ -3470,9 +3470,10 @@ const inputStyle = {
 function LayeredE() {
   return (
     <svg viewBox="0 0 15 20" style={{ height: "0.74em", width: "0.56em", display: "inline-block" }} fill={BRAND_ACCENT}>
-      <rect x="0" y="0.5" width="15" height="4.3" rx="0.5" />
-      <rect x="0" y="7.85" width="15" height="4.3" rx="0.5" />
-      <rect x="0" y="15.2" width="15" height="4.3" rx="0.5" />
+      <rect x="0" y="0" width="3.2" height="20" rx="0.5" />
+      <rect x="0" y="0" width="7" height="4" rx="0.5" />
+      <rect x="0" y="8" width="11" height="4" rx="0.5" />
+      <rect x="0" y="16" width="15" height="4" rx="0.5" />
     </svg>
   );
 }
