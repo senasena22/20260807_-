@@ -1584,7 +1584,7 @@ export default function StudyApp() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingTop: "calc(32px + env(safe-area-inset-top))",
+        paddingTop: "calc(20px + env(safe-area-inset-top))",
         paddingLeft: "calc(16px + env(safe-area-inset-left))",
         paddingRight: "calc(16px + env(safe-area-inset-right))",
         paddingBottom: page === "review" ? "60px" : "108px",
@@ -1597,7 +1597,18 @@ export default function StudyApp() {
 
       <div style={{ width: "100%", maxWidth: 440 }}>
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: 24,
+            position: "sticky",
+            top: "env(safe-area-inset-top)",
+            zIndex: 5,
+            background: "#faf9f7",
+            paddingTop: 12,
+            paddingBottom: 8,
+          }}
+        >
           <h1
             style={{
               fontFamily: BRAND_FONT,
@@ -1615,7 +1626,7 @@ export default function StudyApp() {
             <LayeredE />
             <span>RU</span>
           </h1>
-          <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>小さな学びを、ちゃんとためる。</div>
+          <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>今日の学びを、今日貯める。</div>
         </div>
 
         {/* Home */}
@@ -2479,7 +2490,7 @@ export default function StudyApp() {
                   value={userNameInput}
                   onChange={(e) => setUserNameInput(e.target.value)}
                   placeholder="お名前"
-                  style={{ ...inputStyle, flex: 1, width: "auto" }}
+                  style={{ ...inputStyle, flex: 1, width: "auto", minWidth: 0 }}
                 />
                 <button
                   onClick={handleSaveUserName}
@@ -2572,7 +2583,7 @@ export default function StudyApp() {
                   value={syncCodeInput}
                   onChange={(e) => setSyncCodeInput(e.target.value)}
                   placeholder="コードを入力"
-                  style={{ ...inputStyle, flex: 1, width: "auto" }}
+                  style={{ ...inputStyle, flex: 1, width: "auto", minWidth: 0 }}
                 />
                 <button
                   onClick={handleSyncLoad}
@@ -3621,7 +3632,7 @@ async function generateShareImage({ studiedDays, points, totalMastered, totalCar
   y += 30;
   ctx.fillStyle = "#9A9488";
   ctx.font = '500 14px "Noto Sans JP", sans-serif';
-  ctx.fillText("小さな学びを、ちゃんとためる。", cx, y);
+  ctx.fillText("今日の学びを、今日貯める。", cx, y);
   y += 100;
 
   ctx.fillStyle = accent;

@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: 'TAMERU',
         short_name: 'TAMERU',
-        description: '小さな学びを、ちゃんとためる。',
+        description: '今日の学びを、今日貯める。',
         lang: 'ja',
         start_url: '.',
         scope: '.',
