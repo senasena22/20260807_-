@@ -1577,7 +1577,7 @@ export default function StudyApp() {
               marginRight: "-0.8em",
               color: "#33362F",
               display: "inline-flex",
-              alignItems: "center",
+              alignItems: "baseline",
             }}
           >
             <span>TAM</span>
