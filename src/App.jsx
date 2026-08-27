@@ -676,7 +676,7 @@ export default function StudyApp() {
     const text = await file.text();
     const rows = parseCSV(text);
     if (rows.length === 0) {
-      setCsvPreview({ error: "CSVが空だったよ。" });
+      setCsvPreview({ error: "CSVが空でした。" });
       return;
     }
     const columns = CSV_SCHEMA_COLUMNS[schema];
@@ -884,7 +884,7 @@ export default function StudyApp() {
   };
 
   const handleDeleteCard = (id) => {
-    if (!window.confirm("このカードを削除する？元に戻せないよ。")) return;
+    if (!window.confirm("このカードを削除しますか？元に戻せません。")) return;
     setDeck((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -1041,7 +1041,7 @@ export default function StudyApp() {
   const deleteDeck = (key) => {
     const target = decks.find((x) => x.key === key);
     if (!target || target.builtin) return;
-    if (!window.confirm(`「${target.label}」デッキを削除する？中のカードも全部消えるよ。元に戻せないよ。`)) return;
+    if (!window.confirm(`「${target.label}」デッキを削除しますか？中のカードも全部消えます。元に戻せません。`)) return;
     const remaining = decks.filter((x) => x.key !== key);
     setDeck((prev) => {
       const next = {};
@@ -1277,14 +1277,14 @@ export default function StudyApp() {
       try {
         const parsed = JSON.parse(reader.result);
         if (!parsed.data || typeof parsed.data !== "object") {
-          window.alert("このファイルはバックアップとして読み込めなかったよ。");
+          window.alert("このファイルはバックアップとして読み込めませんでした。");
           return;
         }
-        if (!window.confirm("今のデータを上書きして復元する？元に戻せないよ。")) return;
+        if (!window.confirm("今のデータを上書きして復元しますか？元に戻せません。")) return;
         Object.entries(parsed.data).forEach(([key, value]) => {
           if (ALL_STORAGE_KEYS.includes(key)) localStorage.setItem(key, value);
         });
-        window.alert("復元したよ。アプリを再読み込みするね。");
+        window.alert("復元しました。アプリを再読み込みします。");
         window.location.reload();
       } catch {
         window.alert("ファイルの読み込みに失敗しました。正しいバックアップファイルか確認してください。");
@@ -1317,7 +1317,7 @@ export default function StudyApp() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("save failed");
-      setSyncMessage(`保存したよ！コード: ${code}`);
+      setSyncMessage(`保存しました。コード: ${code}`);
     } catch {
       setSyncMessage("保存に失敗しました。通信環境を確認してください。");
     } finally {
@@ -1336,16 +1336,16 @@ export default function StudyApp() {
     try {
       const res = await fetch(`${SYNC_API_BASE}/${code}`);
       if (res.status === 404) {
-        setSyncMessage("そのコードのデータは見つからなかったよ。");
+        setSyncMessage("そのコードのデータは見つかりませんでした。");
         return;
       }
       if (!res.ok) throw new Error("load failed");
       const parsed = await res.json();
       if (!parsed.data || typeof parsed.data !== "object") {
-        setSyncMessage("データの形式が正しくなかったよ。");
+        setSyncMessage("データの形式が正しくありませんでした。");
         return;
       }
-      if (!window.confirm("今のデータを上書きして復元する？元に戻せないよ。")) return;
+      if (!window.confirm("今のデータを上書きして復元しますか？元に戻せません。")) return;
       Object.entries(parsed.data).forEach(([key, value]) => {
         if (ALL_STORAGE_KEYS.includes(key)) localStorage.setItem(key, value);
       });
@@ -1387,7 +1387,7 @@ export default function StudyApp() {
         URL.revokeObjectURL(url);
       }, "image/png");
     } catch {
-      window.alert("画像の生成に失敗したよ。もう一度試してみて。");
+      window.alert("画像の生成に失敗しました。もう一度試してください。");
     }
   };
 
@@ -2853,7 +2853,7 @@ export default function StudyApp() {
                 </button>
               </div>
               {domainCards.length === 0 ? (
-                <div style={{ fontSize: 13, color: "#747872", padding: "12px 0" }}>まだカードがないよ。</div>
+                <div style={{ fontSize: 13, color: "#747872", padding: "12px 0" }}>まだカードがありません。</div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
                   {listCards.map((c) => (
