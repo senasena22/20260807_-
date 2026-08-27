@@ -521,6 +521,8 @@ export default function StudyApp() {
   const [showList, setShowList] = useState(false);
   const [csvPreview, setCsvPreview] = useState(null);
   const csvFileInputRef = useRef(null);
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(88);
   const [koreanForm, setKoreanForm] = useState(EMPTY_KOREAN_FORM);
   const [wineForm, setWineForm] = useState(EMPTY_WINE_FORM);
   const [genericForm, setGenericForm] = useState(EMPTY_GENERIC_FORM);
@@ -559,6 +561,16 @@ export default function StudyApp() {
   const [editingMaterial, setEditingMaterial] = useState(false);
   const [materialForm, setMaterialForm] = useState({ name: "", totalUnits: "", currentUnit: "", daysPerUnit: "" });
   const [completedMaterials, setCompletedMaterials] = useState(loadCompletedMaterials);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const update = () => setHeaderHeight(el.getBoundingClientRect().height);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
@@ -1587,7 +1599,7 @@ export default function StudyApp() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingTop: "calc(20px + env(safe-area-inset-top))",
+        paddingTop: `${headerHeight + 16}px`,
         paddingLeft: "calc(16px + env(safe-area-inset-left))",
         paddingRight: "calc(16px + env(safe-area-inset-right))",
         paddingBottom: page === "review" ? "60px" : "108px",
@@ -1598,40 +1610,44 @@ export default function StudyApp() {
         href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
       />
 
-      <div style={{ width: "100%", maxWidth: 440 }}>
-        {/* Header */}
-        <div
+      {/* Header */}
+      <div
+        ref={headerRef}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: "calc(16px + env(safe-area-inset-left))",
+          right: "calc(16px + env(safe-area-inset-right))",
+          maxWidth: 440,
+          margin: "0 auto",
+          textAlign: "center",
+          zIndex: 6,
+          background: "#faf9f7",
+          paddingTop: "calc(12px + env(safe-area-inset-top))",
+          paddingBottom: 8,
+        }}
+      >
+        <h1
           style={{
-            textAlign: "center",
-            marginBottom: 24,
-            position: "sticky",
-            top: "env(safe-area-inset-top)",
-            zIndex: 5,
-            background: "#faf9f7",
-            paddingTop: 12,
-            paddingBottom: 8,
+            fontFamily: BRAND_FONT,
+            fontWeight: 700,
+            fontSize: 19,
+            letterSpacing: "0.5em",
+            margin: 0,
+            marginRight: "-0.5em",
+            color: "#33362F",
+            display: "inline-flex",
+            alignItems: "baseline",
           }}
         >
-          <h1
-            style={{
-              fontFamily: BRAND_FONT,
-              fontWeight: 700,
-              fontSize: 19,
-              letterSpacing: "0.5em",
-              margin: 0,
-              marginRight: "-0.5em",
-              color: "#33362F",
-              display: "inline-flex",
-              alignItems: "baseline",
-            }}
-          >
-            <span>TAM</span>
-            <LayeredE />
-            <span>RU</span>
-          </h1>
-          <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>今日の学びを、今日貯める。</div>
-        </div>
+          <span>TAM</span>
+          <LayeredE />
+          <span>RU</span>
+        </h1>
+        <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>今日の学びを、今日貯める。</div>
+      </div>
 
+      <div style={{ width: "100%", maxWidth: 440 }}>
         {/* Home */}
         {page === "home" && (
           <div style={{ marginBottom: 24 }}>
