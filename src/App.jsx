@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Plus, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Plus, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 
 // ---------- Content ----------
 const KOREAN_CARDS = [
@@ -1577,7 +1577,7 @@ export default function StudyApp() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: "#faf9f7",
         fontFamily: BRAND_FONT,
         color: "#1a1c1b",
@@ -2480,7 +2480,16 @@ export default function StudyApp() {
               </button>
             </div>
 
-            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: BRAND_SHADOW, marginTop: 14 }}>
+          </div>
+        )}
+
+        {page === "settings" && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontFamily: BRAND_FONT, fontWeight: 700, fontSize: 24, color: "#33362F", marginBottom: 16 }}>
+              設定
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: BRAND_SHADOW }}>
               <div style={{ fontFamily: BRAND_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 4 }}>👤 お名前</div>
               <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
                 設定すると、ホームの挨拶で呼びかけます。空欄のままでもOKです。
@@ -3481,6 +3490,7 @@ export default function StudyApp() {
             { key: "library", label: "ライブラリ", Icon: Library },
             { key: "goals", label: "目標", Icon: Target },
             { key: "report", label: "レポート", Icon: BarChart3 },
+            { key: "settings", label: "設定", Icon: Settings },
           ].map(({ key, label, Icon }) => {
             const active = page === key;
             return (
