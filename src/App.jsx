@@ -1572,8 +1572,9 @@ export default function StudyApp() {
               fontFamily: BRAND_FONT,
               fontWeight: 700,
               fontSize: 19,
-              letterSpacing: "0.02em",
+              letterSpacing: "0.8em",
               margin: 0,
+              marginRight: "-0.8em",
               color: "#33362F",
               display: "inline-flex",
               alignItems: "center",
@@ -3469,7 +3470,7 @@ const inputStyle = {
 // evoking things accumulating in layers
 function LayeredE() {
   return (
-    <svg viewBox="0 0 15 20" style={{ height: "0.74em", width: "0.56em", display: "inline-block" }} fill={BRAND_ACCENT}>
+    <svg viewBox="0 0 15 20" style={{ height: "0.74em", width: "0.56em", display: "inline-block", marginRight: "0.8em" }} fill={BRAND_ACCENT}>
       <rect x="0" y="0" width="3.2" height="20" rx="0.5" />
       <rect x="0" y="0" width="7" height="4" rx="0.5" />
       <rect x="0" y="8" width="11" height="4" rx="0.5" />
