@@ -2504,13 +2504,13 @@ export default function StudyApp() {
 
         {page === "settings" && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontFamily: BRAND_FONT, fontWeight: 700, fontSize: 24, color: "#33362F", marginBottom: 16 }}>
+            <div style={{ fontFamily: BRAND_FONT, fontWeight: 700, fontSize: 20, color: "#33362F", marginBottom: 10 }}>
               設定
             </div>
 
-            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: BRAND_SHADOW }}>
-              <div style={{ fontFamily: BRAND_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 4 }}>👤 お名前</div>
-              <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 12, boxShadow: BRAND_SHADOW }}>
+              <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#1a1c1b", marginBottom: 3 }}>👤 お名前</div>
+              <div style={{ fontSize: 11, color: "#747872", marginBottom: 8, lineHeight: 1.4 }}>
                 設定すると、ホームの挨拶で呼びかけます。空欄のままでもOKです。
               </div>
               <div style={{ display: "flex", gap: 8 }}>
@@ -2523,14 +2523,14 @@ export default function StudyApp() {
                 <button
                   onClick={handleSaveUserName}
                   style={{
-                    padding: "0 16px",
+                    padding: "0 14px",
                     borderRadius: 999,
                     border: "none",
                     background: BRAND_TONES[1].bg,
                     color: BRAND_TONES[1].accent,
                     fontFamily: BRAND_FONT,
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: 12,
                     cursor: "pointer",
                     whiteSpace: "nowrap",
                   }}
@@ -2540,9 +2540,9 @@ export default function StudyApp() {
               </div>
             </div>
 
-            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: BRAND_SHADOW, marginTop: 14 }}>
-              <div style={{ fontFamily: BRAND_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 4 }}>💾 データのバックアップ</div>
-              <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 12, boxShadow: BRAND_SHADOW, marginTop: 10 }}>
+              <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#1a1c1b", marginBottom: 3 }}>💾 データのバックアップ</div>
+              <div style={{ fontSize: 11, color: "#747872", marginBottom: 8, lineHeight: 1.4 }}>
                 定期的に書き出しておくと、機種変更やアプリの再インストールでも復元できます。
               </div>
               <div style={{ display: "flex", gap: 8 }}>
@@ -2550,13 +2550,13 @@ export default function StudyApp() {
                   onClick={handleExportBackup}
                   style={{
                     flex: 1,
-                    padding: "10px 0",
+                    padding: "8px 0",
                     borderRadius: 999,
                     border: "none",
                     background: BRAND_TONES[3].bg,
                     color: BRAND_TONES[3].accent,
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: 12,
                     cursor: "pointer",
                   }}
                 >
@@ -2566,13 +2566,13 @@ export default function StudyApp() {
                   onClick={handleImportClick}
                   style={{
                     flex: 1,
-                    padding: "10px 0",
+                    padding: "8px 0",
                     borderRadius: 999,
                     border: "none",
                     background: BRAND_TONES[3].bg,
                     color: BRAND_TONES[3].accent,
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: 12,
                     cursor: "pointer",
                   }}
                 >
@@ -2582,9 +2582,9 @@ export default function StudyApp() {
               <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} style={{ display: "none" }} />
             </div>
 
-            <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 16, boxShadow: BRAND_SHADOW, marginTop: 14 }}>
-              <div style={{ fontFamily: BRAND_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 4 }}>☁️ 他の端末と同期</div>
-              <div style={{ fontSize: 12, color: "#747872", marginBottom: 12, lineHeight: 1.6 }}>
+            <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 12, boxShadow: BRAND_SHADOW, marginTop: 10 }}>
+              <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#1a1c1b", marginBottom: 3 }}>☁️ 他の端末と同期</div>
+              <div style={{ fontSize: 11, color: "#747872", marginBottom: 8, lineHeight: 1.4 }}>
                 コードを使って、PCなど他の端末とデータをやり取りできます。自動では同期しないので、更新したいタイミングで手動で保存・読み込みしてください。
               </div>
               <button
@@ -2592,16 +2592,16 @@ export default function StudyApp() {
                 disabled={syncBusy}
                 style={{
                   width: "100%",
-                  padding: "10px 0",
+                  padding: "8px 0",
                   borderRadius: 999,
                   border: "none",
                   background: syncBusy ? "#EDE9DD" : BRAND_TONES[2].bg,
                   color: syncBusy ? "#C9C2B4" : BRAND_TONES[2].accent,
                   fontFamily: BRAND_FONT,
                   fontWeight: 700,
-                  fontSize: 13,
+                  fontSize: 12,
                   cursor: syncBusy ? "default" : "pointer",
-                  marginBottom: 8,
+                  marginBottom: 6,
                 }}
               >
                 ☁️ 保存する{syncCode ? `（コード: ${syncCode}）` : ""}
@@ -2611,20 +2611,20 @@ export default function StudyApp() {
                   value={syncCodeInput}
                   onChange={(e) => setSyncCodeInput(e.target.value)}
                   placeholder="コードを入力"
-                  style={{ ...inputStyle, flex: 1, width: "auto", minWidth: 0 }}
+                  style={{ ...inputStyle, flex: 1, width: "auto", minWidth: 0, padding: 8 }}
                 />
                 <button
                   onClick={handleSyncLoad}
                   disabled={syncBusy}
                   style={{
-                    padding: "0 16px",
+                    padding: "0 14px",
                     borderRadius: 999,
                     border: "none",
                     background: syncBusy ? "#EDE9DD" : BRAND_TONES[2].bg,
                     color: syncBusy ? "#C9C2B4" : BRAND_TONES[2].accent,
                     fontFamily: BRAND_FONT,
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: 12,
                     cursor: syncBusy ? "default" : "pointer",
                     whiteSpace: "nowrap",
                   }}
@@ -2635,8 +2635,8 @@ export default function StudyApp() {
               {syncMessage && (
                 <div
                   style={{
-                    fontSize: 12,
-                    marginTop: 8,
+                    fontSize: 11,
+                    marginTop: 6,
                     color: syncMessage.includes("失敗") || syncMessage.includes("見つから") || syncMessage.includes("正しく") ? "#B0483A" : "#4e604f",
                   }}
                 >
