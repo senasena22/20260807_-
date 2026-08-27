@@ -99,6 +99,27 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return "おはようございます";
+  if (hour >= 11 && hour < 17) return "こんにちは";
+  return "こんばんは";
+}
+
+const REASSURANCE_MESSAGES = [
+  "少しずつ、ちゃんとたまっています。",
+  "今日もひとつ、積み重なっています。",
+  "焦らなくても、ちゃんと前に進んでいます。",
+  "小さな一歩も、ちゃんと記録に残っています。",
+  "続けているだけで、もう十分です。",
+  "ゆっくりでも、着実にたまっています。",
+];
+
+function getReassuranceMessage() {
+  const dayIndex = Math.floor(Date.now() / 86400000);
+  return REASSURANCE_MESSAGES[dayIndex % REASSURANCE_MESSAGES.length];
+}
+
 function addDaysStr(dateStr, days) {
   const [y, m, d] = dateStr.split("-").map(Number);
   const dt = new Date(y, m - 1, d);
@@ -1572,9 +1593,9 @@ export default function StudyApp() {
               fontFamily: BRAND_FONT,
               fontWeight: 700,
               fontSize: 19,
-              letterSpacing: "0.8em",
+              letterSpacing: "0.5em",
               margin: 0,
-              marginRight: "-0.8em",
+              marginRight: "-0.5em",
               color: "#33362F",
               display: "inline-flex",
               alignItems: "baseline",
@@ -1591,10 +1612,10 @@ export default function StudyApp() {
         {page === "home" && (
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontFamily: BRAND_FONT, fontWeight: 700, fontSize: 22, color: "#33362F", marginBottom: 6 }}>
-              こんにちは
+              {getGreeting()}
             </div>
             <div style={{ fontSize: 13, color: "#7A7A70", marginBottom: 24, lineHeight: 1.6 }}>
-              少しずつ、ちゃんとたまっています。
+              {getReassuranceMessage()}
             </div>
 
             {backupDue && (
@@ -3470,7 +3491,7 @@ const inputStyle = {
 // evoking things accumulating in layers
 function LayeredE() {
   return (
-    <svg viewBox="0 0 15 20" style={{ height: "0.74em", width: "0.56em", display: "inline-block", marginRight: "0.8em" }} fill={BRAND_ACCENT}>
+    <svg viewBox="0 0 15 20" style={{ height: "0.74em", width: "0.56em", display: "inline-block", marginRight: "0.5em" }} fill={BRAND_ACCENT}>
       <rect x="0" y="0" width="3.2" height="20" rx="0.5" />
       <rect x="0" y="0" width="7" height="4" rx="0.5" />
       <rect x="0" y="8" width="11" height="4" rx="0.5" />
