@@ -1592,7 +1592,6 @@ export default function StudyApp() {
         height: "100dvh",
         overflowY: "auto",
         overscrollBehavior: "contain",
-        WebkitOverflowScrolling: "touch",
         background: "#faf9f7",
         fontFamily: BRAND_FONT,
         color: "#1a1c1b",
