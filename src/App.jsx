@@ -1577,7 +1577,10 @@ export default function StudyApp() {
   return (
     <div
       style={{
-        minHeight: "100dvh",
+        height: "100dvh",
+        overflowY: "auto",
+        overscrollBehavior: "contain",
+        WebkitOverflowScrolling: "touch",
         background: "#faf9f7",
         fontFamily: BRAND_FONT,
         color: "#1a1c1b",
