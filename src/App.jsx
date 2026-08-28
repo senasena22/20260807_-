@@ -306,6 +306,9 @@ const CSV_SCHEMA_COLUMNS = {
     { key: "romanized", header: "ローマ字", required: false },
     { key: "rule", header: "発音ルール", required: false },
     { key: "source", header: "出典", required: false },
+    { key: "exampleSentence", header: "例文", required: false },
+    { key: "exampleMeaning", header: "例文の意味", required: false },
+    { key: "exampleRomanized", header: "例文の発音", required: false },
   ],
   wine: [
     { key: "q", header: "質問", required: true },
@@ -423,7 +426,18 @@ function shuffle(arr) {
   return a;
 }
 
-const EMPTY_KOREAN_FORM = { ko: "", romanized: "", meaning: "", rule: "", source: "", frontImage: "", backImage: "" };
+const EMPTY_KOREAN_FORM = {
+  ko: "",
+  romanized: "",
+  meaning: "",
+  rule: "",
+  source: "",
+  frontImage: "",
+  backImage: "",
+  exampleSentence: "",
+  exampleMeaning: "",
+  exampleRomanized: "",
+};
 const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "", hypothesis: "", source: "", frontImage: "", backImage: "" };
 const EMPTY_GENERIC_FORM = { front: "", back: "", source: "", frontImage: "", backImage: "" };
 
@@ -513,6 +527,7 @@ export default function StudyApp() {
   const [deck, setDeck] = useState(loadDeck);
   const [domain, setDomain] = useState(() => loadDomain(loadDecks()));
   const [flipped, setFlipped] = useState(false);
+  const [showExample, setShowExample] = useState(false);
   const [queueIdx, setQueueIdx] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
   const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain(loadDecks())));
@@ -651,7 +666,7 @@ export default function StudyApp() {
   const handleAddCard = () => {
     const schema = d.schema;
     if (schema === "korean") {
-      const { ko, romanized, meaning, rule, source, frontImage, backImage } = koreanForm;
+      const { ko, romanized, meaning, rule, source, frontImage, backImage, exampleSentence, exampleMeaning, exampleRomanized } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須です。");
         return;
@@ -668,6 +683,9 @@ export default function StudyApp() {
         source: source.trim(),
         frontImage,
         backImage,
+        exampleSentence: exampleSentence.trim(),
+        exampleMeaning: exampleMeaning.trim(),
+        exampleRomanized: exampleRomanized.trim(),
       });
       setKoreanForm(EMPTY_KOREAN_FORM);
     } else if (schema === "wine") {
@@ -768,7 +786,16 @@ export default function StudyApp() {
         const v = r.values;
         let card;
         if (csvPreview.schema === "korean") {
-          card = { ko: v.ko, romanized: v.romanized, meaning: v.meaning, rule: v.rule || "特になし", source: v.source };
+          card = {
+            ko: v.ko,
+            romanized: v.romanized,
+            meaning: v.meaning,
+            rule: v.rule || "特になし",
+            source: v.source,
+            exampleSentence: v.exampleSentence,
+            exampleMeaning: v.exampleMeaning,
+            exampleRomanized: v.exampleRomanized,
+          };
         } else if (csvPreview.schema === "wine") {
           card = { q: v.q, a: v.a, region: v.region || "-", topic: v.topic || "その他", hypothesis: v.hypothesis, source: v.source };
         } else {
@@ -810,6 +837,9 @@ export default function StudyApp() {
         source: card.source || "",
         frontImage: card.frontImage || "",
         backImage: card.backImage || "",
+        exampleSentence: card.exampleSentence || "",
+        exampleMeaning: card.exampleMeaning || "",
+        exampleRomanized: card.exampleRomanized || "",
       });
     } else if (schema === "wine") {
       setWineForm({
@@ -840,7 +870,7 @@ export default function StudyApp() {
   const handleEditCard = () => {
     const schema = d.schema;
     if (schema === "korean") {
-      const { ko, romanized, meaning, rule, source, frontImage, backImage } = koreanForm;
+      const { ko, romanized, meaning, rule, source, frontImage, backImage, exampleSentence, exampleMeaning, exampleRomanized } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須です。");
         return;
@@ -860,6 +890,9 @@ export default function StudyApp() {
           source: source.trim(),
           frontImage,
           backImage,
+          exampleSentence: exampleSentence.trim(),
+          exampleMeaning: exampleMeaning.trim(),
+          exampleRomanized: exampleRomanized.trim(),
         },
       }));
       setKoreanForm(EMPTY_KOREAN_FORM);
@@ -952,6 +985,11 @@ export default function StudyApp() {
   );
 
   const current = testMode ? deck[testQueue[testIdx]] : deck[sessionQueue[queueIdx]];
+
+  useEffect(() => {
+    setShowExample(false);
+  }, [current?.id]);
+
   const d = decks.find((x) => x.key === domain) || decks[0];
   const schema = d.schema;
   const DIcon = DECK_ICONS[d.iconKey] || BookOpen;
@@ -1552,6 +1590,30 @@ export default function StudyApp() {
           </div>
           {current.source && (
             <div style={{ fontSize: 12, color: "#747872", marginTop: 10 }}>📎 {current.source}</div>
+          )}
+          {current.exampleSentence && (
+            <div style={{ marginTop: 10 }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowExample((s) => !s);
+                }}
+                style={smallLinkButtonStyle(d.accent, true)}
+              >
+                {showExample ? "例文を閉じる" : "📖 例文を見る"}
+              </button>
+              {showExample && (
+                <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.6, color: "#1a1c1b" }}>
+                  <div style={{ fontWeight: 600 }}>{current.exampleSentence}</div>
+                  {current.exampleRomanized && (
+                    <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>{current.exampleRomanized}</div>
+                  )}
+                  {current.exampleMeaning && (
+                    <div style={{ fontSize: 13, color: "#1a1c1b", marginTop: 4 }}>{current.exampleMeaning}</div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
       ) : schema === "wine" ? (
@@ -3078,6 +3140,25 @@ export default function StudyApp() {
                       </option>
                     ))}
                   </select>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#747872", marginTop: 4 }}>例文（任意）</div>
+                  <textarea
+                    value={koreanForm.exampleSentence}
+                    onChange={(e) => setKoreanForm((f) => ({ ...f, exampleSentence: e.target.value }))}
+                    placeholder="この単語を使った一文（例: 학교에 도착하다.）"
+                    style={{ ...inputStyle, minHeight: 50, resize: "vertical" }}
+                  />
+                  <input
+                    value={koreanForm.exampleRomanized}
+                    onChange={(e) => setKoreanForm((f) => ({ ...f, exampleRomanized: e.target.value }))}
+                    placeholder="例文のローマ字読み（任意）"
+                    style={inputStyle}
+                  />
+                  <input
+                    value={koreanForm.exampleMeaning}
+                    onChange={(e) => setKoreanForm((f) => ({ ...f, exampleMeaning: e.target.value }))}
+                    placeholder="例文の意味（例: 学校に到着する。）"
+                    style={inputStyle}
+                  />
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <ImagePickerField
                       label="表面の画像（任意）"
