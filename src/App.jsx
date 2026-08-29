@@ -528,6 +528,7 @@ export default function StudyApp() {
   const [domain, setDomain] = useState(() => loadDomain(loadDecks()));
   const [flipped, setFlipped] = useState(false);
   const [showExample, setShowExample] = useState(false);
+  const [splashPhase, setSplashPhase] = useState("visible");
   const [queueIdx, setQueueIdx] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
   const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain(loadDecks())));
@@ -585,6 +586,15 @@ export default function StudyApp() {
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setSplashPhase("fading"), 700);
+    const t2 = setTimeout(() => setSplashPhase("hidden"), 1000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, []);
 
   useEffect(() => {
@@ -1670,6 +1680,44 @@ export default function StudyApp() {
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
       />
+
+      {/* Splash */}
+      {splashPhase !== "hidden" && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 100,
+            background: "#faf9f7",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: splashPhase === "fading" ? 0 : 1,
+            transition: "opacity 0.3s ease",
+            pointerEvents: "none",
+          }}
+        >
+          <h1
+            style={{
+              fontFamily: BRAND_FONT,
+              fontWeight: 700,
+              fontSize: 19,
+              letterSpacing: "0.5em",
+              margin: 0,
+              marginRight: "-0.5em",
+              color: "#33362F",
+              display: "inline-flex",
+              alignItems: "baseline",
+            }}
+          >
+            <span>TAM</span>
+            <LayeredE />
+            <span>RU</span>
+          </h1>
+          <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>小さな学びを、今日ためる。</div>
+        </div>
+      )}
 
       {/* Header */}
       <div
