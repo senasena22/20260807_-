@@ -1705,7 +1705,7 @@ export default function StudyApp() {
           <LayeredE />
           <span>RU</span>
         </h1>
-        <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>今日の学びを、今日貯める。</div>
+        <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>小さな学びを、今日ためる。</div>
       </div>
 
       <div style={{ width: "100%", maxWidth: 440 }}>
@@ -3741,7 +3741,7 @@ async function generateShareImage({ studiedDays, points, totalMastered, totalCar
   y += 30;
   ctx.fillStyle = "#9A9488";
   ctx.font = '500 14px "Noto Sans JP", sans-serif';
-  ctx.fillText("今日の学びを、今日貯める。", cx, y);
+  ctx.fillText("小さな学びを、今日ためる。", cx, y);
   y += 100;
 
   ctx.fillStyle = accent;
