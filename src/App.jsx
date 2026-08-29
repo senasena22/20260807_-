@@ -528,7 +528,7 @@ export default function StudyApp() {
   const [domain, setDomain] = useState(() => loadDomain(loadDecks()));
   const [flipped, setFlipped] = useState(false);
   const [showExample, setShowExample] = useState(false);
-  const [launchPhase, setLaunchPhase] = useState("centered");
+  const [showSplash, setShowSplash] = useState(true);
   const [queueIdx, setQueueIdx] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
   const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain(loadDecks())));
@@ -577,14 +577,8 @@ export default function StudyApp() {
   const [completedMaterials, setCompletedMaterials] = useState(loadCompletedMaterials);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setLaunchPhase("docking"), 600);
-    const t2 = setTimeout(() => setLaunchPhase("revealing"), 1100);
-    const t3 = setTimeout(() => setLaunchPhase("done"), 1450);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
+    const t = setTimeout(() => setShowSplash(false), 800);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -1666,22 +1660,44 @@ export default function StudyApp() {
         paddingBottom: page === "review" ? "60px" : "108px",
       }}
     >
-      {/* Launch cover: hides the app underneath until the logo has docked into the header */}
-      {launchPhase !== "done" && (
+      {/* Splash: centered logo shown at launch, then removed instantly with no animation */}
+      {showSplash && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 99,
+            zIndex: 100,
             background: "#faf9f7",
-            opacity: launchPhase === "revealing" ? 0 : 1,
-            transition: "opacity 0.35s ease",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
             pointerEvents: "none",
           }}
-        />
+        >
+          <h1
+            style={{
+              fontFamily: BRAND_FONT,
+              fontWeight: 700,
+              fontSize: 19,
+              lineHeight: "22px",
+              letterSpacing: "0.5em",
+              margin: 0,
+              marginRight: "-0.5em",
+              color: "#33362F",
+              display: "inline-flex",
+              alignItems: "baseline",
+            }}
+          >
+            <span>TAM</span>
+            <LayeredE />
+            <span>RU</span>
+          </h1>
+          <div style={{ fontSize: 11, lineHeight: "14px", color: "#9A9488", marginTop: 4 }}>小さな学びを、今日ためる。</div>
+        </div>
       )}
 
-      {/* Header: starts centered on screen at launch, then glides up into its docked (top) position */}
+      {/* Header: always docked at the top, independent of the splash */}
       <div
         style={{
           position: "fixed",
@@ -1691,12 +1707,10 @@ export default function StudyApp() {
           maxWidth: 440,
           margin: "0 auto",
           textAlign: "center",
-          zIndex: 100,
-          background: launchPhase === "centered" ? "transparent" : "#faf9f7",
+          zIndex: 6,
+          background: "#faf9f7",
           paddingTop: "calc(12px + env(safe-area-inset-top))",
           paddingBottom: 8,
-          transform: launchPhase === "centered" ? "translateY(calc(50vh - 40px))" : "translateY(0)",
-          transition: launchPhase === "centered" ? "none" : "transform 0.5s ease, background 0.5s ease",
         }}
       >
         <h1
