@@ -1672,10 +1672,8 @@ export default function StudyApp() {
             inset: 0,
             zIndex: 100,
             background: "#faf9f7",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
+            textAlign: "center",
+            paddingTop: "calc(12px + env(safe-area-inset-top))",
             opacity: splashPhase === "fading" ? 0 : 1,
             transition: "opacity 0.3s ease",
             pointerEvents: "none",
@@ -1686,6 +1684,7 @@ export default function StudyApp() {
               fontFamily: BRAND_FONT,
               fontWeight: 700,
               fontSize: 19,
+              lineHeight: "22px",
               letterSpacing: "0.5em",
               margin: 0,
               marginRight: "-0.5em",
@@ -1698,7 +1697,7 @@ export default function StudyApp() {
             <LayeredE />
             <span>RU</span>
           </h1>
-          <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>小さな学びを、今日ためる。</div>
+          <div style={{ fontSize: 11, lineHeight: "14px", color: "#9A9488", marginTop: 4 }}>小さな学びを、今日ためる。</div>
         </div>
       )}
 
