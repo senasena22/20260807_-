@@ -537,8 +537,6 @@ export default function StudyApp() {
   const [showList, setShowList] = useState(false);
   const [csvPreview, setCsvPreview] = useState(null);
   const csvFileInputRef = useRef(null);
-  const headerRef = useRef(null);
-  const [headerHeight, setHeaderHeight] = useState(88);
   const [koreanForm, setKoreanForm] = useState(EMPTY_KOREAN_FORM);
   const [wineForm, setWineForm] = useState(EMPTY_WINE_FORM);
   const [genericForm, setGenericForm] = useState(EMPTY_GENERIC_FORM);
@@ -577,16 +575,6 @@ export default function StudyApp() {
   const [editingMaterial, setEditingMaterial] = useState(false);
   const [materialForm, setMaterialForm] = useState({ name: "", totalUnits: "", currentUnit: "", daysPerUnit: "" });
   const [completedMaterials, setCompletedMaterials] = useState(loadCompletedMaterials);
-
-  useEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-    const update = () => setHeaderHeight(el.getBoundingClientRect().height);
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   useEffect(() => {
     const t1 = setTimeout(() => setSplashPhase("fading"), 700);
@@ -1670,7 +1658,7 @@ export default function StudyApp() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingTop: `${headerHeight + 16}px`,
+        paddingTop: "calc(env(safe-area-inset-top) + 76px)",
         paddingLeft: "calc(16px + env(safe-area-inset-left))",
         paddingRight: "calc(16px + env(safe-area-inset-right))",
         paddingBottom: page === "review" ? "60px" : "108px",
@@ -1716,7 +1704,6 @@ export default function StudyApp() {
 
       {/* Header */}
       <div
-        ref={headerRef}
         style={{
           position: "fixed",
           top: 0,
@@ -1736,6 +1723,7 @@ export default function StudyApp() {
             fontFamily: BRAND_FONT,
             fontWeight: 700,
             fontSize: 19,
+            lineHeight: "22px",
             letterSpacing: "0.5em",
             margin: 0,
             marginRight: "-0.5em",
@@ -1748,7 +1736,7 @@ export default function StudyApp() {
           <LayeredE />
           <span>RU</span>
         </h1>
-        <div style={{ fontSize: 11, color: "#9A9488", marginTop: 4 }}>小さな学びを、今日ためる。</div>
+        <div style={{ fontSize: 11, lineHeight: "14px", color: "#9A9488", marginTop: 4 }}>小さな学びを、今日ためる。</div>
       </div>
 
       <div style={{ width: "100%", maxWidth: 440 }}>
