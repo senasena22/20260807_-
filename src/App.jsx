@@ -1676,11 +1676,6 @@ export default function StudyApp() {
         paddingBottom: page === "review" ? "60px" : "108px",
       }}
     >
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
-      />
-
       {/* Splash */}
       {splashPhase !== "hidden" && (
         <div
