@@ -528,7 +528,7 @@ export default function StudyApp() {
   const [domain, setDomain] = useState(() => loadDomain(loadDecks()));
   const [flipped, setFlipped] = useState(false);
   const [showExample, setShowExample] = useState(false);
-  const [splashPhase, setSplashPhase] = useState("visible");
+  const [showSplash, setShowSplash] = useState(true);
   const [queueIdx, setQueueIdx] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
   const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain(loadDecks())));
@@ -577,12 +577,8 @@ export default function StudyApp() {
   const [completedMaterials, setCompletedMaterials] = useState(loadCompletedMaterials);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setSplashPhase("fading"), 700);
-    const t2 = setTimeout(() => setSplashPhase("hidden"), 1000);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    const t = setTimeout(() => setShowSplash(false), 800);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -1665,17 +1661,17 @@ export default function StudyApp() {
       }}
     >
       {/* Splash */}
-      {splashPhase !== "hidden" && (
+      {showSplash && (
         <div
           style={{
             position: "fixed",
             inset: 0,
             zIndex: 100,
             background: "#faf9f7",
-            textAlign: "center",
-            paddingTop: "calc(12px + env(safe-area-inset-top))",
-            opacity: splashPhase === "fading" ? 0 : 1,
-            transition: "opacity 0.3s ease",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
             pointerEvents: "none",
           }}
         >
