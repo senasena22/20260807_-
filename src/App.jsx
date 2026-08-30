@@ -534,6 +534,7 @@ export default function StudyApp() {
   const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain(loadDecks())));
 
   const [showInput, setShowInput] = useState(false);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const [showList, setShowList] = useState(false);
   const [csvPreview, setCsvPreview] = useState(null);
   const csvFileInputRef = useRef(null);
@@ -2852,27 +2853,6 @@ export default function StudyApp() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
               <button
-                onClick={() => {
-                  setShowInput(true);
-                  setFormError("");
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  border: "none",
-                  background: "transparent",
-                  color: BRAND_ACCENT,
-                  fontWeight: 600,
-                  fontSize: 13,
-                  padding: "4px 0",
-                  cursor: "pointer",
-                }}
-              >
-                <Plus size={14} />
-                追加
-              </button>
-              <button
                 onClick={() => setShowList(true)}
                 style={{ border: "none", background: "transparent", color: "#7A7A70", fontWeight: 500, fontSize: 13, padding: "4px 0", cursor: "pointer" }}
               >
@@ -2892,12 +2872,6 @@ export default function StudyApp() {
                 }}
               >
                 テスト
-              </button>
-              <button
-                onClick={() => csvFileInputRef.current?.click()}
-                style={{ border: "none", background: "transparent", color: "#7A7A70", fontWeight: 500, fontSize: 13, padding: "4px 0", cursor: "pointer" }}
-              >
-                CSVから読み込む
               </button>
             </div>
             <input
@@ -3446,9 +3420,9 @@ export default function StudyApp() {
             }}
           >
             <div style={{ fontFamily: BRAND_FONT, fontSize: 18, fontWeight: 600 }}>
-              カードがまだないよ
+              カードがまだありません
             </div>
-            <div style={{ fontSize: 13, color: "#434842" }}>「＋追加」から{d.label}のカードを登録してみて。</div>
+            <div style={{ fontSize: 13, color: "#434842" }}>右下の＋ボタンから{d.label}のカードを登録してみてください。</div>
           </div>
         ) : sessionTotal === 0 ? (
           <div
@@ -3587,6 +3561,104 @@ export default function StudyApp() {
           <div style={{ marginTop: 22, fontSize: 12, color: "#747872", textAlign: "center", lineHeight: 1.6 }}>
             テストの結果は復習日に影響しません（力試し用です）。
           </div>
+        )}
+
+        {/* Floating add button */}
+        {!testMode && !showInput && !csvPreview && (
+          <>
+            {showAddMenu && (
+              <>
+                <div
+                  onClick={() => setShowAddMenu(false)}
+                  style={{ position: "fixed", inset: 0, zIndex: 51 }}
+                />
+                <div
+                  style={{
+                    position: "fixed",
+                    bottom: "calc(88px + env(safe-area-inset-bottom))",
+                    right: "calc(20px + env(safe-area-inset-right))",
+                    zIndex: 52,
+                    background: "#FFFFFF",
+                    borderRadius: 16,
+                    boxShadow: "0 10px 28px rgba(26,28,27,0.18)",
+                    padding: 6,
+                    display: "flex",
+                    flexDirection: "column",
+                    minWidth: 180,
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false);
+                      setShowInput(true);
+                      setFormError("");
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      border: "none",
+                      background: "transparent",
+                      color: "#1a1c1b",
+                      fontWeight: 600,
+                      fontSize: 14,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    ✏️ 手動で入力
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false);
+                      csvFileInputRef.current?.click();
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      border: "none",
+                      background: "transparent",
+                      color: "#1a1c1b",
+                      fontWeight: 600,
+                      fontSize: 14,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    📄 CSVから読み込む
+                  </button>
+                </div>
+              </>
+            )}
+            <button
+              onClick={() => setShowAddMenu((s) => !s)}
+              aria-label="カードを追加"
+              style={{
+                position: "fixed",
+                bottom: "calc(20px + env(safe-area-inset-bottom))",
+                right: "calc(20px + env(safe-area-inset-right))",
+                zIndex: 52,
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                border: "none",
+                background: BRAND_ACCENT,
+                color: "#FFFFFF",
+                boxShadow: "0 10px 24px rgba(26,28,27,0.28)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+            >
+              <Plus size={28} />
+            </button>
+          </>
         )}
         </>
         )}
