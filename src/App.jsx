@@ -389,6 +389,22 @@ const KOREAN_PARTICLES = new Set([
   "밖에", "조차", "마저", "라도", "이나", "나", "이라도", "이며", "며",
 ]);
 
+const KOREAN_ADVERBS = new Set([
+  "요즘", "오늘", "어제", "내일", "지금", "아까", "방금", "이제", "나중에", "먼저",
+  "항상", "가끔", "자주", "아직", "벌써", "또", "다시", "매우", "너무", "정말",
+  "진짜", "훨씬", "조금", "많이", "잘", "빨리", "천천히", "열심히", "갑자기",
+  "특히", "그냥", "계속", "결국", "마침내", "심지어", "오히려", "물론",
+]);
+
+function isKoreanGrammarPattern(word) {
+  if (word.startsWith("-")) return true;
+  if (word.includes("/")) {
+    const parts = word.split("/").map((p) => p.replace(/^-/, "").trim());
+    return parts.some((p) => KOREAN_PARTICLES.has(p));
+  }
+  return false;
+}
+
 function guessCategory(schema, card) {
   if (schema === "wine") {
     const haystack = `${card.region || ""} ${card.topic || ""} ${card.q || ""} ${card.a || ""} ${card.hypothesis || ""}`;
@@ -398,7 +414,10 @@ function guessCategory(schema, card) {
   if (schema === "korean") {
     const word = (card.ko || "").trim();
     if (!word) return "";
+    if (isKoreanGrammarPattern(word)) return "助詞";
+    if (/\s/.test(word)) return ""; // full phrase/sentence - too complex to classify
     if (KOREAN_PARTICLES.has(word)) return "助詞";
+    if (KOREAN_ADVERBS.has(word)) return "副詞";
     if (word.endsWith("다")) return "動詞";
     return "名詞";
   }
@@ -1016,9 +1035,11 @@ export default function StudyApp() {
     const dk = decks.find((x) => x.key === domain) || decks[0];
     const guesses = {};
     domainCards.forEach((c) => {
-      if (c.category) return;
+      // 名詞 was the fallback bucket, so re-check those too in case the
+      // heuristic has since learned a more specific answer for this word.
+      if (c.category && c.category !== "名詞") return;
       const guess = guessCategory(dk.schema, c);
-      if (guess) guesses[c.id] = guess;
+      if (guess && guess !== c.category) guesses[c.id] = guess;
     });
     const count = Object.keys(guesses).length;
     if (count === 0) {
@@ -3183,7 +3204,7 @@ export default function StudyApp() {
                   閉じる
                 </button>
               </div>
-              {(schema === "korean" || schema === "wine") && domainCards.some((c) => !c.category) && (
+              {(schema === "korean" || schema === "wine") && domainCards.some((c) => !c.category || c.category === "名詞") && (
                 <button
                   onClick={handleAutoCategorize}
                   style={{
