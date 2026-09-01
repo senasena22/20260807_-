@@ -365,6 +365,46 @@ function buildSessionQueue(deck, domain, category) {
     .map((c) => c.id);
 }
 
+const WINE_COUNTRY_KEYWORDS = [
+  "フランス",
+  "イタリア",
+  "ドイツ",
+  "スペイン",
+  "ポルトガル",
+  "アメリカ",
+  "チリ",
+  "アルゼンチン",
+  "オーストラリア",
+  "ニュージーランド",
+  "南アフリカ",
+  "オーストリア",
+  "ハンガリー",
+  "ジョージア",
+  "日本",
+];
+
+const KOREAN_PARTICLES = new Set([
+  "은", "는", "이", "가", "을", "를", "의", "에", "에서", "에게", "께", "께서",
+  "한테", "로", "으로", "와", "과", "도", "만", "부터", "까지", "보다",
+  "밖에", "조차", "마저", "라도", "이나", "나", "이라도", "이며", "며",
+]);
+
+function guessCategory(schema, card) {
+  if (schema === "wine") {
+    const haystack = `${card.region || ""} ${card.topic || ""}`;
+    const hit = WINE_COUNTRY_KEYWORDS.find((c) => haystack.includes(c));
+    return hit || "";
+  }
+  if (schema === "korean") {
+    const word = (card.ko || "").trim();
+    if (!word) return "";
+    if (KOREAN_PARTICLES.has(word)) return "助詞";
+    if (word.endsWith("다")) return "動詞";
+    return "名詞";
+  }
+  return "";
+}
+
 function loadStats() {
   try {
     const raw = localStorage.getItem(STATS_STORAGE_KEY);
@@ -971,6 +1011,29 @@ export default function StudyApp() {
         .sort((a, b) => (a.dueAt || "").localeCompare(b.dueAt || "") || a.box - b.box),
     [deck, domain]
   );
+
+  const handleAutoCategorize = () => {
+    const dk = decks.find((x) => x.key === domain) || decks[0];
+    const guesses = {};
+    domainCards.forEach((c) => {
+      if (c.category) return;
+      const guess = guessCategory(dk.schema, c);
+      if (guess) guesses[c.id] = guess;
+    });
+    const count = Object.keys(guesses).length;
+    if (count === 0) {
+      window.alert("自動で推測できるカードが見つかりませんでした。");
+      return;
+    }
+    if (!window.confirm(`${count}枚のカードにジャンルを自動で設定します。よろしいですか？（あとから手動で修正できます）`)) return;
+    setDeck((prev) => {
+      const next = { ...prev };
+      Object.entries(guesses).forEach(([id, cat]) => {
+        next[id] = { ...next[id], category: cat };
+      });
+      return next;
+    });
+  };
 
   // list view: newest registered first
   const listCards = useMemo(
@@ -3120,6 +3183,24 @@ export default function StudyApp() {
                   閉じる
                 </button>
               </div>
+              {(schema === "korean" || schema === "wine") && domainCards.some((c) => !c.category) && (
+                <button
+                  onClick={handleAutoCategorize}
+                  style={{
+                    border: `1px solid ${d.accentSoft}`,
+                    background: "transparent",
+                    color: d.accent,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    borderRadius: 8,
+                    padding: "6px 10px",
+                    marginBottom: 10,
+                  }}
+                >
+                  🪄 ジャンルを自動で推測する
+                </button>
+              )}
               {domainCards.length === 0 ? (
                 <div style={{ fontSize: 13, color: "#747872", padding: "12px 0" }}>まだカードがありません。</div>
               ) : (
@@ -3149,6 +3230,9 @@ export default function StudyApp() {
                         )}
                         {c.source && (
                           <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>📎 {c.source}</div>
+                        )}
+                        {c.category && (
+                          <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>🏷️ {c.category}</div>
                         )}
                         <div style={{ fontSize: 12, color: d.accent, marginTop: 4 }}>
                           Box {c.box}・{c.correct}/{c.seen} 正解・次回 {dueLabel(c.dueAt)}
