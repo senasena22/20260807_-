@@ -1292,7 +1292,8 @@ export default function StudyApp() {
   };
 
   const forceReviewAll = () => {
-    setSessionQueue(domainCards.map((c) => c.id));
+    const pool = categoryFilter ? domainCards.filter((c) => c.category === categoryFilter) : domainCards;
+    setSessionQueue(pool.map((c) => c.id));
     setQueueIdx(0);
     setAnswerHistory([]);
     setRedoStack([]);
