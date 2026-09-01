@@ -292,6 +292,7 @@ const CSV_SCHEMA_COLUMNS = {
     { key: "exampleSentence", header: "例文", required: false },
     { key: "exampleMeaning", header: "例文の意味", required: false },
     { key: "exampleRomanized", header: "例文の発音", required: false },
+    { key: "category", header: "ジャンル", required: false },
   ],
   wine: [
     { key: "q", header: "質問", required: true },
@@ -300,11 +301,13 @@ const CSV_SCHEMA_COLUMNS = {
     { key: "topic", header: "トピック", required: false },
     { key: "hypothesis", header: "仮説", required: false },
     { key: "source", header: "出典", required: false },
+    { key: "category", header: "ジャンル", required: false },
   ],
   generic: [
     { key: "front", header: "表面", required: true },
     { key: "back", header: "裏面", required: true },
     { key: "source", header: "出典", required: false },
+    { key: "category", header: "ジャンル", required: false },
   ],
 };
 
@@ -354,10 +357,10 @@ function newDeckKey() {
   return `deck-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function buildSessionQueue(deck, domain) {
+function buildSessionQueue(deck, domain, category) {
   const today = todayStr();
   return Object.values(deck)
-    .filter((c) => c.domain === domain && (c.dueAt || today) <= today)
+    .filter((c) => c.domain === domain && (!category || c.category === category) && (c.dueAt || today) <= today)
     .sort((a, b) => (a.dueAt || "").localeCompare(b.dueAt || "") || a.box - b.box)
     .map((c) => c.id);
 }
@@ -415,9 +418,10 @@ const EMPTY_KOREAN_FORM = {
   exampleSentence: "",
   exampleMeaning: "",
   exampleRomanized: "",
+  category: "",
 };
-const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "", hypothesis: "", source: "", frontImage: "", backImage: "" };
-const EMPTY_GENERIC_FORM = { front: "", back: "", source: "", frontImage: "", backImage: "" };
+const EMPTY_WINE_FORM = { q: "", a: "", region: "", topic: "", hypothesis: "", source: "", frontImage: "", backImage: "", category: "" };
+const EMPTY_GENERIC_FORM = { front: "", back: "", source: "", frontImage: "", backImage: "", category: "" };
 
 const CARD_IMAGE_MAX_DIMENSION = 640;
 const CARD_IMAGE_QUALITY = 0.72;
@@ -512,6 +516,7 @@ export default function StudyApp() {
   const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain(loadDecks())));
   const [answerHistory, setAnswerHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   const [showInput, setShowInput] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -643,7 +648,7 @@ export default function StudyApp() {
   const handleAddCard = () => {
     const schema = d.schema;
     if (schema === "korean") {
-      const { ko, romanized, meaning, rule, source, frontImage, backImage, exampleSentence, exampleMeaning, exampleRomanized } = koreanForm;
+      const { ko, romanized, meaning, rule, source, frontImage, backImage, exampleSentence, exampleMeaning, exampleRomanized, category } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須です。");
         return;
@@ -663,10 +668,11 @@ export default function StudyApp() {
         exampleSentence: exampleSentence.trim(),
         exampleMeaning: exampleMeaning.trim(),
         exampleRomanized: exampleRomanized.trim(),
+        category: category.trim(),
       });
       setKoreanForm(EMPTY_KOREAN_FORM);
     } else if (schema === "wine") {
-      const { q, a, region, topic, hypothesis, source, frontImage, backImage } = wineForm;
+      const { q, a, region, topic, hypothesis, source, frontImage, backImage, category } = wineForm;
       if (!q.trim() || !a.trim()) {
         setFormError("質問と解答は必須です。");
         return;
@@ -684,10 +690,11 @@ export default function StudyApp() {
         source: source.trim(),
         frontImage,
         backImage,
+        category: category.trim(),
       });
       setWineForm(EMPTY_WINE_FORM);
     } else {
-      const { front, back, source, frontImage, backImage } = genericForm;
+      const { front, back, source, frontImage, backImage, category } = genericForm;
       if (!front.trim() || !back.trim()) {
         setFormError("表と裏は必須です。");
         return;
@@ -696,7 +703,7 @@ export default function StudyApp() {
         setFormError("同じ内容がすでに登録されています。");
         return;
       }
-      addCard({ front: front.trim(), back: back.trim(), source: source.trim(), frontImage, backImage });
+      addCard({ front: front.trim(), back: back.trim(), source: source.trim(), frontImage, backImage, category: category.trim() });
       setGenericForm(EMPTY_GENERIC_FORM);
     }
     setFormError("");
@@ -772,11 +779,12 @@ export default function StudyApp() {
             exampleSentence: v.exampleSentence,
             exampleMeaning: v.exampleMeaning,
             exampleRomanized: v.exampleRomanized,
+            category: v.category,
           };
         } else if (csvPreview.schema === "wine") {
-          card = { q: v.q, a: v.a, region: v.region || "-", topic: v.topic || "その他", hypothesis: v.hypothesis, source: v.source };
+          card = { q: v.q, a: v.a, region: v.region || "-", topic: v.topic || "その他", hypothesis: v.hypothesis, source: v.source, category: v.category };
         } else {
-          card = { front: v.front, back: v.back, source: v.source };
+          card = { front: v.front, back: v.back, source: v.source, category: v.category };
         }
         newEntries[id] = {
           ...card,
@@ -819,6 +827,7 @@ export default function StudyApp() {
         exampleSentence: card.exampleSentence || "",
         exampleMeaning: card.exampleMeaning || "",
         exampleRomanized: card.exampleRomanized || "",
+        category: card.category || "",
       });
     } else if (schema === "wine") {
       setWineForm({
@@ -830,6 +839,7 @@ export default function StudyApp() {
         source: card.source || "",
         frontImage: card.frontImage || "",
         backImage: card.backImage || "",
+        category: card.category || "",
       });
     } else {
       setGenericForm({
@@ -838,6 +848,7 @@ export default function StudyApp() {
         source: card.source || "",
         frontImage: card.frontImage || "",
         backImage: card.backImage || "",
+        category: card.category || "",
       });
     }
     setEditingCardId(card.id);
@@ -849,7 +860,7 @@ export default function StudyApp() {
   const handleEditCard = () => {
     const schema = d.schema;
     if (schema === "korean") {
-      const { ko, romanized, meaning, rule, source, frontImage, backImage, exampleSentence, exampleMeaning, exampleRomanized } = koreanForm;
+      const { ko, romanized, meaning, rule, source, frontImage, backImage, exampleSentence, exampleMeaning, exampleRomanized, category } = koreanForm;
       if (!ko.trim() || !meaning.trim()) {
         setFormError("韓国語と意味は必須です。");
         return;
@@ -872,11 +883,12 @@ export default function StudyApp() {
           exampleSentence: exampleSentence.trim(),
           exampleMeaning: exampleMeaning.trim(),
           exampleRomanized: exampleRomanized.trim(),
+          category: category.trim(),
         },
       }));
       setKoreanForm(EMPTY_KOREAN_FORM);
     } else if (schema === "wine") {
-      const { q, a, region, topic, hypothesis, source, frontImage, backImage } = wineForm;
+      const { q, a, region, topic, hypothesis, source, frontImage, backImage, category } = wineForm;
       if (!q.trim() || !a.trim()) {
         setFormError("質問と解答は必須です。");
         return;
@@ -897,11 +909,12 @@ export default function StudyApp() {
           source: source.trim(),
           frontImage,
           backImage,
+          category: category.trim(),
         },
       }));
       setWineForm(EMPTY_WINE_FORM);
     } else {
-      const { front, back, source, frontImage, backImage } = genericForm;
+      const { front, back, source, frontImage, backImage, category } = genericForm;
       if (!front.trim() || !back.trim()) {
         setFormError("表と裏は必須です。");
         return;
@@ -912,7 +925,7 @@ export default function StudyApp() {
       }
       setDeck((prev) => ({
         ...prev,
-        [editingCardId]: { ...prev[editingCardId], front: front.trim(), back: back.trim(), source: source.trim(), frontImage, backImage },
+        [editingCardId]: { ...prev[editingCardId], front: front.trim(), back: back.trim(), source: source.trim(), frontImage, backImage, category: category.trim() },
       }));
       setGenericForm(EMPTY_GENERIC_FORM);
     }
@@ -964,6 +977,22 @@ export default function StudyApp() {
     () => [...domainCards].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")),
     [domainCards]
   );
+
+  const availableCategories = useMemo(() => {
+    const set = new Set();
+    domainCards.forEach((c) => c.category && set.add(c.category));
+    return Array.from(set);
+  }, [domainCards]);
+
+  const handleCategoryFilter = (category) => {
+    setCategoryFilter(category);
+    setSessionQueue(buildSessionQueue(deck, domain, category));
+    setQueueIdx(0);
+    setAnswerHistory([]);
+    setRedoStack([]);
+    setFlipped(false);
+    setSessionDone(false);
+  };
 
   const current = testMode ? deck[testQueue[testIdx]] : deck[sessionQueue[queueIdx]];
 
@@ -1096,6 +1125,7 @@ export default function StudyApp() {
 
   const switchDomain = (key) => {
     setDomain(key);
+    setCategoryFilter("");
     setSessionQueue(buildSessionQueue(deck, key));
     setQueueIdx(0);
     setAnswerHistory([]);
@@ -1169,7 +1199,7 @@ export default function StudyApp() {
   };
 
   const restart = () => {
-    setSessionQueue(buildSessionQueue(deck, domain));
+    setSessionQueue(buildSessionQueue(deck, domain, categoryFilter));
     setQueueIdx(0);
     setAnswerHistory([]);
     setRedoStack([]);
@@ -1187,7 +1217,8 @@ export default function StudyApp() {
   };
 
   const startTest = () => {
-    const ids = shuffle(domainCards.map((c) => c.id)).slice(0, TEST_SAMPLE_SIZE);
+    const pool = categoryFilter ? domainCards.filter((c) => c.category === categoryFilter) : domainCards;
+    const ids = shuffle(pool.map((c) => c.id)).slice(0, TEST_SAMPLE_SIZE);
     setTestQueue(ids);
     setTestIdx(0);
     setTestScore(0);
@@ -2910,6 +2941,43 @@ export default function StudyApp() {
                 テスト
               </button>
             </div>
+            {availableCategories.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => handleCategoryFilter("")}
+                  style={{
+                    border: `1px solid ${categoryFilter === "" ? d.accent : "#D8D2C2"}`,
+                    background: categoryFilter === "" ? d.accent : "transparent",
+                    color: categoryFilter === "" ? "#FFFFFF" : "#7A7A70",
+                    fontWeight: 500,
+                    fontSize: 12,
+                    borderRadius: 999,
+                    padding: "4px 12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  すべて
+                </button>
+                {availableCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => handleCategoryFilter(cat)}
+                    style={{
+                      border: `1px solid ${categoryFilter === cat ? d.accent : "#D8D2C2"}`,
+                      background: categoryFilter === cat ? d.accent : "transparent",
+                      color: categoryFilter === cat ? "#FFFFFF" : "#7A7A70",
+                      fontWeight: 500,
+                      fontSize: 12,
+                      borderRadius: 999,
+                      padding: "4px 12px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
             <input
               ref={csvFileInputRef}
               type="file"
@@ -3176,6 +3244,12 @@ export default function StudyApp() {
                       </option>
                     ))}
                   </select>
+                  <input
+                    value={koreanForm.category}
+                    onChange={(e) => setKoreanForm((f) => ({ ...f, category: e.target.value }))}
+                    placeholder="ジャンル（絞り込み用・任意、例: 動詞）"
+                    style={inputStyle}
+                  />
                   <div style={{ fontSize: 12, fontWeight: 600, color: "#747872", marginTop: 4 }}>例文（任意）</div>
                   <textarea
                     value={koreanForm.exampleSentence}
@@ -3252,6 +3326,12 @@ export default function StudyApp() {
                       </option>
                     ))}
                   </select>
+                  <input
+                    value={wineForm.category}
+                    onChange={(e) => setWineForm((f) => ({ ...f, category: e.target.value }))}
+                    placeholder="ジャンル（絞り込み用・任意、例: イタリア）"
+                    style={inputStyle}
+                  />
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <ImagePickerField
                       label="表面の画像（任意）"
@@ -3283,6 +3363,12 @@ export default function StudyApp() {
                     value={genericForm.source}
                     onChange={(e) => setGenericForm((f) => ({ ...f, source: e.target.value }))}
                     placeholder="出典・メモ（任意）"
+                    style={inputStyle}
+                  />
+                  <input
+                    value={genericForm.category}
+                    onChange={(e) => setGenericForm((f) => ({ ...f, category: e.target.value }))}
+                    placeholder="ジャンル（絞り込み用・任意）"
                     style={inputStyle}
                   />
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
