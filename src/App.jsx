@@ -510,6 +510,8 @@ export default function StudyApp() {
   const [queueIdx, setQueueIdx] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
   const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain(loadDecks())));
+  const [answerHistory, setAnswerHistory] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
 
   const [showInput, setShowInput] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -632,6 +634,8 @@ export default function StudyApp() {
     }));
     setSessionQueue((q) => [...q, id]);
     setQueueIdx(0);
+    setAnswerHistory([]);
+    setRedoStack([]);
     setSessionDone(false);
     setPoints((p) => ({ ...p, total: p.total + 2 }));
   };
@@ -792,6 +796,8 @@ export default function StudyApp() {
       setDeck((prev) => ({ ...prev, ...newEntries }));
       setSessionQueue((q) => [...q, ...newIds]);
       setQueueIdx(0);
+      setAnswerHistory([]);
+      setRedoStack([]);
       setSessionDone(false);
       setPoints((p) => ({ ...p, total: p.total + newIds.length * 2 }));
     }
@@ -939,6 +945,8 @@ export default function StudyApp() {
       setShowInput(false);
     }
     setQueueIdx(0);
+    setAnswerHistory([]);
+    setRedoStack([]);
     setFlipped(false);
     setSessionDone(false);
   };
@@ -1011,7 +1019,9 @@ export default function StudyApp() {
       return;
     }
 
-    const prevBox = deck[cardId].box;
+    const prevCard = deck[cardId];
+    const prevBox = prevCard.box;
+    const before = { box: prevCard.box, interval: prevCard.interval, dueAt: prevCard.dueAt, seen: prevCard.seen, correct: prevCard.correct };
     let box, interval, dueAt;
     if (correct) {
       box = Math.min(prevBox + 1, INTERVALS_DAYS.length);
@@ -1022,18 +1032,18 @@ export default function StudyApp() {
       interval = 0;
       dueAt = today;
     }
-    setDeck((prev) => {
-      const c = prev[cardId];
-      return { ...prev, [cardId]: { ...c, box, interval, dueAt, seen: c.seen + 1, correct: c.correct + (correct ? 1 : 0) } };
-    });
+    const after = { box, interval, dueAt, seen: before.seen + 1, correct: before.correct + (correct ? 1 : 0) };
+    const justMastered = correct && box >= MASTERY_BOX && prevBox < MASTERY_BOX;
+    setDeck((prev) => ({ ...prev, [cardId]: { ...prev[cardId], ...after } }));
     setStats((prev) => {
       const studyDates = prev.studyDates.includes(today) ? prev.studyDates : [...prev.studyDates, today];
-      const justMastered = correct && box >= MASTERY_BOX && prevBox < MASTERY_BOX;
       const masteredEvents = justMastered ? [...prev.masteredEvents, { date: today, domain, cardId }] : prev.masteredEvents;
       const hasDomainToday = prev.studyDomains.some((e) => e.date === today && e.domain === domain);
       const studyDomains = hasDomainToday ? prev.studyDomains : [...prev.studyDomains, { date: today, domain }];
       return { ...prev, studyDates, masteredEvents, studyDomains };
     });
+    setAnswerHistory((h) => [...h, { cardId, domain, today, before, after, justMastered }]);
+    setRedoStack([]);
     setFlipped(false);
     if (queueIdx + 1 >= sessionQueue.length) {
       setSessionDone(true);
@@ -1042,10 +1052,54 @@ export default function StudyApp() {
     }
   };
 
+  const handleUndoAnswer = () => {
+    if (answerHistory.length === 0) return;
+    const entry = answerHistory[answerHistory.length - 1];
+    setAnswerHistory((h) => h.slice(0, -1));
+    setRedoStack((r) => [...r, entry]);
+    setDeck((prev) => ({ ...prev, [entry.cardId]: { ...prev[entry.cardId], ...entry.before } }));
+    if (entry.justMastered) {
+      setStats((prev) => {
+        const idx = prev.masteredEvents
+          .map((e, i) => ({ e, i }))
+          .reverse()
+          .find(({ e }) => e.cardId === entry.cardId && e.domain === entry.domain && e.date === entry.today);
+        if (!idx) return prev;
+        return { ...prev, masteredEvents: prev.masteredEvents.filter((_, i) => i !== idx.i) };
+      });
+    }
+    const idx = sessionQueue.indexOf(entry.cardId);
+    if (idx !== -1) setQueueIdx(idx);
+    setSessionDone(false);
+    setFlipped(false);
+    setShowExample(false);
+  };
+
+  const handleRedoAnswer = () => {
+    if (redoStack.length === 0) return;
+    const entry = redoStack[redoStack.length - 1];
+    setRedoStack((r) => r.slice(0, -1));
+    setAnswerHistory((h) => [...h, entry]);
+    setDeck((prev) => ({ ...prev, [entry.cardId]: { ...prev[entry.cardId], ...entry.after } }));
+    if (entry.justMastered) {
+      setStats((prev) => ({ ...prev, masteredEvents: [...prev.masteredEvents, { date: entry.today, domain: entry.domain, cardId: entry.cardId }] }));
+    }
+    const idx = sessionQueue.indexOf(entry.cardId);
+    if (idx !== -1 && idx + 1 >= sessionQueue.length) {
+      setSessionDone(true);
+    } else if (idx !== -1) {
+      setQueueIdx(idx + 1);
+    }
+    setFlipped(false);
+    setShowExample(false);
+  };
+
   const switchDomain = (key) => {
     setDomain(key);
     setSessionQueue(buildSessionQueue(deck, key));
     setQueueIdx(0);
+    setAnswerHistory([]);
+    setRedoStack([]);
     setFlipped(false);
     setSessionDone(false);
     setShowInput(false);
@@ -1117,6 +1171,8 @@ export default function StudyApp() {
   const restart = () => {
     setSessionQueue(buildSessionQueue(deck, domain));
     setQueueIdx(0);
+    setAnswerHistory([]);
+    setRedoStack([]);
     setFlipped(false);
     setSessionDone(false);
   };
@@ -1124,6 +1180,8 @@ export default function StudyApp() {
   const forceReviewAll = () => {
     setSessionQueue(domainCards.map((c) => c.id));
     setQueueIdx(0);
+    setAnswerHistory([]);
+    setRedoStack([]);
     setFlipped(false);
     setSessionDone(false);
   };
@@ -3484,6 +3542,26 @@ export default function StudyApp() {
               }}
             >
               <RotateCcw size={15} /> もう一周する
+            </button>
+          </div>
+        )}
+
+        {/* Undo/redo the last answer */}
+        {!testMode && (answerHistory.length > 0 || redoStack.length > 0) && (
+          <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 12 }}>
+            <button
+              onClick={handleUndoAnswer}
+              disabled={answerHistory.length === 0}
+              style={smallLinkButtonStyle(answerHistory.length === 0 ? "#C9C2B4" : "#7A7A70")}
+            >
+              ← 戻る
+            </button>
+            <button
+              onClick={handleRedoAnswer}
+              disabled={redoStack.length === 0}
+              style={smallLinkButtonStyle(redoStack.length === 0 ? "#C9C2B4" : "#7A7A70")}
+            >
+              進む →
             </button>
           </div>
         )}
