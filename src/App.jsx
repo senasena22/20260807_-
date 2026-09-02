@@ -3744,14 +3744,22 @@ export default function StudyApp() {
             <button
               onClick={handleUndoAnswer}
               disabled={answerHistory.length === 0}
-              style={smallLinkButtonStyle(answerHistory.length === 0 ? "#C9C2B4" : "#7A7A70")}
+              style={{
+                ...smallLinkButtonStyle(answerHistory.length === 0 ? "#C9C2B4" : "#7A7A70"),
+                fontSize: 15,
+                padding: "8px 16px",
+              }}
             >
               ← 戻る
             </button>
             <button
               onClick={handleRedoAnswer}
               disabled={redoStack.length === 0}
-              style={smallLinkButtonStyle(redoStack.length === 0 ? "#C9C2B4" : "#7A7A70")}
+              style={{
+                ...smallLinkButtonStyle(redoStack.length === 0 ? "#C9C2B4" : "#7A7A70"),
+                fontSize: 15,
+                padding: "8px 16px",
+              }}
             >
               進む →
             </button>
