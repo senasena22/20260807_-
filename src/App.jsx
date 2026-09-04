@@ -1455,6 +1455,8 @@ export default function StudyApp() {
       : null;
   const todayDueAcrossDecks = decks.reduce((sum, dk) => sum + buildSessionQueue(deck, dk.key).length, 0);
   const todayNewCardsCount = Object.values(deck).filter((c) => (c.createdAt || "").startsWith(todayStr())).length;
+  const DUE_DISPLAY_CAP = 50;
+  const todayDueDisplay = todayDueAcrossDecks > DUE_DISPLAY_CAP ? `${DUE_DISPLAY_CAP}+` : todayDueAcrossDecks;
 
   const weekDates = getCurrentWeekDates();
   const weekTotalSeconds = weekDates.reduce((sum, d) => sum + (stats.studySeconds[d] || 0), 0);
@@ -1948,7 +1950,7 @@ export default function StudyApp() {
                 <div>
                   <div style={{ fontSize: 12, color: "#7A7A70", marginBottom: 4 }}>今日の復習</div>
                   <div style={{ fontFamily: BRAND_FONT, fontWeight: 700, fontSize: 26, color: "#33362F" }}>
-                    {todayDueAcrossDecks}
+                    {todayDueDisplay}
                     <span style={{ fontSize: 14, fontWeight: 500, color: "#7A7A70" }}>枚</span>
                   </div>
                 </div>
@@ -1979,7 +1981,11 @@ export default function StudyApp() {
                 {todayDueAcrossDecks > 0 ? "今日の学習をはじめる" : "今日の復習は完了しています"}
               </button>
               <div style={{ textAlign: "center", fontSize: 12, color: "#7A7A70", marginTop: 10 }}>
-                {todayDueAcrossDecks > 0 ? "このペースで大丈夫です。" : "今日も少しずつ進めています。"}
+                {todayDueAcrossDecks > DUE_DISPLAY_CAP
+                  ? "焦らず、できる分だけ進めましょう。"
+                  : todayDueAcrossDecks > 0
+                  ? "このペースで大丈夫です。"
+                  : "今日も少しずつ進めています。"}
               </div>
             </div>
 
