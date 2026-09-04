@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Plus, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Plus, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight, Settings, Paperclip, Lightbulb, PartyPopper, Share2, User, Save, Download, Upload, Cloud, Wand2, Tag, FileText, BookMarked } from "lucide-react";
 
 // ---------- Content ----------
 const DECK_ICONS = {
@@ -582,6 +582,7 @@ export default function StudyApp() {
   const [showList, setShowList] = useState(false);
   const [csvPreview, setCsvPreview] = useState(null);
   const csvFileInputRef = useRef(null);
+  const listScrollTopRef = useRef(0);
   const [koreanForm, setKoreanForm] = useState(EMPTY_KOREAN_FORM);
   const [wineForm, setWineForm] = useState(EMPTY_WINE_FORM);
   const [genericForm, setGenericForm] = useState(EMPTY_GENERIC_FORM);
@@ -1736,7 +1737,9 @@ export default function StudyApp() {
             {current.rule}
           </div>
           {current.source && (
-            <div style={{ fontSize: 12, color: "#747872", marginTop: 10 }}>📎 {current.source}</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 10, display: "flex", alignItems: "center", gap: 4 }}>
+              <Paperclip size={12} /> {current.source}
+            </div>
           )}
           {current.exampleSentence && (
             <div style={{ marginTop: 10 }}>
@@ -1745,9 +1748,9 @@ export default function StudyApp() {
                   e.stopPropagation();
                   setShowExample((s) => !s);
                 }}
-                style={smallLinkButtonStyle(d.accent, true)}
+                style={{ ...smallLinkButtonStyle(d.accent, true), display: "inline-flex", alignItems: "center", gap: 4 }}
               >
-                {showExample ? "例文を閉じる" : "📖 例文を見る"}
+                {showExample ? "例文を閉じる" : (<><BookOpen size={12} /> 例文を見る</>)}
               </button>
               {showExample && (
                 <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.6, color: "#1a1c1b" }}>
@@ -1773,10 +1776,14 @@ export default function StudyApp() {
             {current.a}
           </div>
           {current.hypothesis && (
-            <div style={{ fontSize: 12, color: "#747872", marginTop: 10 }}>💭 最初の仮説: {current.hypothesis}</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 10, display: "flex", alignItems: "center", gap: 4 }}>
+              <Lightbulb size={12} /> 最初の仮説: {current.hypothesis}
+            </div>
           )}
           {current.source && (
-            <div style={{ fontSize: 12, color: "#747872", marginTop: 6 }}>📎 {current.source}</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 6, display: "flex", alignItems: "center", gap: 4 }}>
+              <Paperclip size={12} /> {current.source}
+            </div>
           )}
         </div>
       ) : (
@@ -1788,7 +1795,9 @@ export default function StudyApp() {
             {current.back}
           </div>
           {current.source && (
-            <div style={{ fontSize: 12, color: "#747872", marginTop: 6 }}>📎 {current.source}</div>
+            <div style={{ fontSize: 12, color: "#747872", marginTop: 6, display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
+              <Paperclip size={12} /> {current.source}
+            </div>
           )}
         </div>
       )}
@@ -2309,9 +2318,10 @@ export default function StudyApp() {
                   boxShadow: BRAND_SHADOW,
                 }}
               >
+                <Target size={14} />
                 {daysUntil(examDates[domain]) >= 0
-                  ? `🎯 試験まであと${daysUntil(examDates[domain])}日（${examDates[domain]}）`
-                  : "🎯 試験日を過ぎてるよ"}
+                  ? `試験まであと${daysUntil(examDates[domain])}日（${examDates[domain]}）`
+                  : "試験日を過ぎてるよ"}
                 <button onClick={openExamDateEditor} style={smallLinkButtonStyle("#747872")}>
                   変更
                 </button>
@@ -2329,9 +2339,12 @@ export default function StudyApp() {
                   padding: "10px 16px",
                   borderRadius: 999,
                   cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
-                🎯 {d.label}の試験日を設定する
+                <Target size={14} /> {d.label}の試験日を設定する
               </button>
             )}
           </div>
@@ -2348,7 +2361,9 @@ export default function StudyApp() {
               boxShadow: BRAND_SHADOW,
             }}
           >
-            <div style={{ fontFamily: BRAND_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 10 }}>📖 教材の進み具合</div>
+            <div style={{ fontFamily: BRAND_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+              <BookOpen size={16} /> 教材の進み具合
+            </div>
             {editingMaterial ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input
@@ -2447,7 +2462,9 @@ export default function StudyApp() {
                     このペースだと <strong>{materialFinishDate}</strong> ごろ完了予定
                   </div>
                 ) : (
-                  <div style={{ fontSize: 12, color: BRAND_TONES[3].accent, fontWeight: 700, marginTop: 10 }}>一周完了です！🎉</div>
+                  <div style={{ fontSize: 12, color: BRAND_TONES[3].accent, fontWeight: 700, marginTop: 10, display: "flex", alignItems: "center", gap: 4 }}>
+                    <PartyPopper size={14} /> 一周完了です！
+                  </div>
                 )}
                 {materialRemaining === 0 && (
                   <button
@@ -2463,9 +2480,13 @@ export default function StudyApp() {
                       fontWeight: 700,
                       fontSize: 13,
                       cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
                     }}
                   >
-                    📚 読了リストに追加する
+                    <BookMarked size={14} /> 読了リストに追加する
                   </button>
                 )}
                 {materialRemaining > 0 && examDaysLeft !== null && (
@@ -2531,9 +2552,12 @@ export default function StudyApp() {
                   padding: "10px 16px",
                   borderRadius: 999,
                   cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
-                📖 教材を登録する
+                <BookOpen size={14} /> 教材を登録する
               </button>
             )}
           </div>
@@ -2550,7 +2574,9 @@ export default function StudyApp() {
               boxShadow: BRAND_SHADOW,
             }}
           >
-            <div style={{ fontFamily: BRAND_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 10 }}>📚 読了リスト</div>
+            <div style={{ fontFamily: BRAND_FONT, fontSize: 15, fontWeight: 700, color: "#1a1c1b", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+              <BookMarked size={16} /> 読了リスト
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {completedMaterials
                 .filter((x) => x.deckKey === domain)
@@ -2733,9 +2759,12 @@ export default function StudyApp() {
                   padding: "10px 16px",
                   borderRadius: 999,
                   cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
-                📤 進捗をシェア
+                <Share2 size={14} /> 進捗をシェア
               </button>
             </div>
 
@@ -2749,7 +2778,9 @@ export default function StudyApp() {
             </div>
 
             <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 12, boxShadow: BRAND_SHADOW }}>
-              <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#1a1c1b", marginBottom: 3 }}>👤 お名前</div>
+              <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#1a1c1b", marginBottom: 3, display: "flex", alignItems: "center", gap: 6 }}>
+                <User size={14} /> お名前
+              </div>
               <div style={{ fontSize: 11, color: "#747872", marginBottom: 8, lineHeight: 1.4 }}>
                 設定すると、ホームの挨拶で呼びかけます。空欄のままでもOKです。
               </div>
@@ -2781,7 +2812,9 @@ export default function StudyApp() {
             </div>
 
             <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 12, boxShadow: BRAND_SHADOW, marginTop: 10 }}>
-              <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#1a1c1b", marginBottom: 3 }}>💾 データのバックアップ</div>
+              <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#1a1c1b", marginBottom: 3, display: "flex", alignItems: "center", gap: 6 }}>
+                <Save size={14} /> データのバックアップ
+              </div>
               <div style={{ fontSize: 11, color: "#747872", marginBottom: 8, lineHeight: 1.4 }}>
                 定期的に書き出しておくと、機種変更やアプリの再インストールでも復元できます。
               </div>
@@ -2798,9 +2831,13 @@ export default function StudyApp() {
                     fontWeight: 700,
                     fontSize: 12,
                     cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 5,
                   }}
                 >
-                  ⬇️ 書き出す
+                  <Download size={13} /> 書き出す
                 </button>
                 <button
                   onClick={handleImportClick}
@@ -2814,16 +2851,22 @@ export default function StudyApp() {
                     fontWeight: 700,
                     fontSize: 12,
                     cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 5,
                   }}
                 >
-                  ⬆️ 読み込む
+                  <Upload size={13} /> 読み込む
                 </button>
               </div>
               <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} style={{ display: "none" }} />
             </div>
 
             <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 12, boxShadow: BRAND_SHADOW, marginTop: 10 }}>
-              <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#1a1c1b", marginBottom: 3 }}>☁️ 他の端末と同期</div>
+              <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#1a1c1b", marginBottom: 3, display: "flex", alignItems: "center", gap: 6 }}>
+                <Cloud size={14} /> 他の端末と同期
+              </div>
               <div style={{ fontSize: 11, color: "#747872", marginBottom: 8, lineHeight: 1.4 }}>
                 コードを使って、PCなど他の端末とデータをやり取りできます。自動では同期しないので、更新したいタイミングで手動で保存・読み込みしてください。
               </div>
@@ -2842,9 +2885,13 @@ export default function StudyApp() {
                   fontSize: 12,
                   cursor: syncBusy ? "default" : "pointer",
                   marginBottom: 6,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 5,
                 }}
               >
-                ☁️ 保存する{syncCode ? `（コード: ${syncCode}）` : ""}
+                <Cloud size={13} /> 保存する{syncCode ? `（コード: ${syncCode}）` : ""}
               </button>
               <div style={{ display: "flex", gap: 8 }}>
                 <input
@@ -2867,9 +2914,12 @@ export default function StudyApp() {
                     fontSize: 12,
                     cursor: syncBusy ? "default" : "pointer",
                     whiteSpace: "nowrap",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
                   }}
                 >
-                  ☁️ 読み込む
+                  <Cloud size={13} /> 読み込む
                 </button>
               </div>
               {syncMessage && (
@@ -3006,7 +3056,16 @@ export default function StudyApp() {
             <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
               <button
                 onClick={() => setShowList(true)}
-                style={{ border: "none", background: "transparent", color: "#7A7A70", fontWeight: 500, fontSize: 13, padding: "4px 0", cursor: "pointer" }}
+                style={{
+                  border: `1px solid ${d.accentSoft}`,
+                  background: "transparent",
+                  color: d.accent,
+                  fontWeight: 600,
+                  fontSize: 14,
+                  padding: "8px 16px",
+                  borderRadius: 999,
+                  cursor: "pointer",
+                }}
               >
                 一覧
               </button>
@@ -3014,12 +3073,13 @@ export default function StudyApp() {
                 onClick={startTest}
                 disabled={totalCards === 0}
                 style={{
-                  border: "none",
+                  border: `1px solid ${totalCards === 0 ? "#E5E2DC" : d.accentSoft}`,
                   background: "transparent",
-                  color: totalCards === 0 ? "#C9C2B4" : "#7A7A70",
-                  fontWeight: 500,
-                  fontSize: 13,
-                  padding: "4px 0",
+                  color: totalCards === 0 ? "#C9C2B4" : d.accent,
+                  fontWeight: 600,
+                  fontSize: 14,
+                  padding: "8px 16px",
+                  borderRadius: 999,
                   cursor: totalCards === 0 ? "default" : "pointer",
                 }}
               >
@@ -3218,15 +3278,26 @@ export default function StudyApp() {
                     borderRadius: 8,
                     padding: "6px 10px",
                     marginBottom: 10,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
                   }}
                 >
-                  🪄 ジャンルを自動で推測する
+                  <Wand2 size={13} /> ジャンルを自動で推測する
                 </button>
               )}
               {domainCards.length === 0 ? (
                 <div style={{ fontSize: 13, color: "#747872", padding: "12px 0" }}>まだカードがありません。</div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
+                <div
+                  ref={(node) => {
+                    if (node) node.scrollTop = listScrollTopRef.current;
+                  }}
+                  onScroll={(e) => {
+                    listScrollTopRef.current = e.currentTarget.scrollTop;
+                  }}
+                  style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}
+                >
                   {listCards.map((c) => (
                     <div
                       key={c.id}
@@ -3248,13 +3319,19 @@ export default function StudyApp() {
                           {schema === "korean" ? c.meaning : schema === "wine" ? c.a : c.back}
                         </div>
                         {schema === "wine" && c.hypothesis && (
-                          <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>💭 仮説: {c.hypothesis}</div>
+                          <div style={{ fontSize: 12, color: "#747872", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                            <Lightbulb size={12} /> 仮説: {c.hypothesis}
+                          </div>
                         )}
                         {c.source && (
-                          <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>📎 {c.source}</div>
+                          <div style={{ fontSize: 12, color: "#747872", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                            <Paperclip size={12} /> {c.source}
+                          </div>
                         )}
                         {c.category && (
-                          <div style={{ fontSize: 12, color: "#747872", marginTop: 2 }}>🏷️ {c.category}</div>
+                          <div style={{ fontSize: 12, color: "#747872", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                            <Tag size={12} /> {c.category}
+                          </div>
                         )}
                         <div style={{ fontSize: 12, color: d.accent, marginTop: 4 }}>
                           Box {c.box}・{c.correct}/{c.seen} 正解・次回 {dueLabel(c.dueAt)}
@@ -3864,7 +3941,7 @@ export default function StudyApp() {
                       textAlign: "left",
                     }}
                   >
-                    ✏️ 手動で入力
+                    <Pencil size={15} /> 手動で入力
                   </button>
                   <button
                     onClick={() => {
@@ -3886,7 +3963,7 @@ export default function StudyApp() {
                       textAlign: "left",
                     }}
                   >
-                    📄 CSVから読み込む
+                    <FileText size={15} /> CSVから読み込む
                   </button>
                 </div>
               </>
