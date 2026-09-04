@@ -1454,9 +1454,7 @@ export default function StudyApp() {
       ? Math.round((testsInRange.reduce((sum, t) => sum + t.correct / t.total, 0) / testsInRange.length) * 100)
       : null;
   const todayDueAcrossDecks = decks.reduce((sum, dk) => sum + buildSessionQueue(deck, dk.key).length, 0);
-  const todayNewCardsCount = Object.values(deck).filter((c) => (c.createdAt || "").startsWith(todayStr())).length;
   const DUE_DISPLAY_CAP = 50;
-  const todayDueDisplay = todayDueAcrossDecks > DUE_DISPLAY_CAP ? `${DUE_DISPLAY_CAP}+` : todayDueAcrossDecks;
 
   const weekDates = getCurrentWeekDates();
   const weekTotalSeconds = weekDates.reduce((sum, d) => sum + (stats.studySeconds[d] || 0), 0);
@@ -1946,22 +1944,6 @@ export default function StudyApp() {
             )}
 
             <div style={{ background: "#FFFFFF", borderRadius: 20, padding: 20, marginBottom: 20, boxShadow: BRAND_SHADOW }}>
-              <div style={{ display: "flex", gap: 28, marginBottom: 20 }}>
-                <div>
-                  <div style={{ fontSize: 12, color: "#7A7A70", marginBottom: 4 }}>今日の復習</div>
-                  <div style={{ fontFamily: BRAND_FONT, fontWeight: 700, fontSize: 26, color: "#33362F" }}>
-                    {todayDueDisplay}
-                    <span style={{ fontSize: 14, fontWeight: 500, color: "#7A7A70" }}>枚</span>
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, color: "#7A7A70", marginBottom: 4 }}>今日の新規</div>
-                  <div style={{ fontFamily: BRAND_FONT, fontWeight: 700, fontSize: 26, color: "#33362F" }}>
-                    {todayNewCardsCount}
-                    <span style={{ fontSize: 14, fontWeight: 500, color: "#7A7A70" }}>枚</span>
-                  </div>
-                </div>
-              </div>
               <button
                 onClick={todayDueAcrossDecks > 0 ? goToTodayGoal : undefined}
                 disabled={todayDueAcrossDecks === 0}
