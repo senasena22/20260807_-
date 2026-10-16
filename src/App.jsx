@@ -312,6 +312,26 @@ const CSV_SCHEMA_COLUMNS = {
   ],
 };
 
+// one example row per schema, shown in the downloadable CSV template so the format is self-explanatory
+const CSV_TEMPLATE_EXAMPLE_ROWS = {
+  korean: [["안녕하세요", "こんにちは", "annyeonghaseyo", "", "できる韓国語", "", "", "", "あいさつ"]],
+  wine: [["ボルドーの主な赤品種は？", "カベルネ・ソーヴィニヨン", "フランス｜ボルドー", "品種", "", "1冊目の教科書", "フランス"]],
+  generic: [["1868年に行われたことは？", "大政奉還", "教材2章", "歴史"]],
+};
+
+function csvField(value) {
+  const s = String(value ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function buildCsvTemplate(schema) {
+  const columns = CSV_SCHEMA_COLUMNS[schema] || CSV_SCHEMA_COLUMNS.generic;
+  const header = columns.map((c) => c.header);
+  const exampleRows = CSV_TEMPLATE_EXAMPLE_ROWS[schema] || [];
+  const lines = [header, ...exampleRows].map((row) => row.map(csvField).join(","));
+  return lines.join("\r\n") + "\r\n";
+}
+
 const CSV_PRIMARY_FIELD = { korean: "ko", wine: "q", generic: "front" };
 
 // box: 0 = new/due now, 1〜5 = how many successful reviews in a row. dueAt: "YYYY-MM-DD", the next date this card should resurface.
@@ -824,6 +844,19 @@ export default function StudyApp() {
     }
     setFormError("");
     setShowInput(false);
+  };
+
+  const downloadCsvTemplate = () => {
+    const csv = buildCsvTemplate(d.schema);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tameru-template-${d.schema}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   const handleCsvFile = async (file) => {
@@ -3327,7 +3360,7 @@ export default function StudyApp() {
                 }}
               >
                 <div style={{ marginBottom: 6 }}>
-                  <strong>カードの登録:</strong> 右下の＋ボタンから「手動で入力」で1枚ずつ、または「CSVから読み込む」でまとめて登録できます。
+                  <strong>カードの登録:</strong> 右下の＋ボタンから「手動で入力」で1枚ずつ、または「CSVから読み込む」でまとめて登録できます。フォーマットに迷ったら「CSVテンプレートを取得」で見本をダウンロードできます。
                 </div>
                 <div>
                   <strong>テスト:</strong> 登録済みのカードからランダムに出題する力試しモードです。結果は復習日(間隔反復)に影響しません。
@@ -4212,6 +4245,28 @@ export default function StudyApp() {
                     }}
                   >
                     <FileText size={15} /> CSVから読み込む
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false);
+                      downloadCsvTemplate();
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      border: "none",
+                      background: "transparent",
+                      color: "#1a1c1b",
+                      fontWeight: 600,
+                      fontSize: 14,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    <Download size={15} /> CSVテンプレートを取得
                   </button>
                 </div>
               </>
