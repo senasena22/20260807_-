@@ -1339,6 +1339,17 @@ export default function StudyApp() {
     }
   };
 
+  const moveDeck = (key, direction) => {
+    setDecks((prev) => {
+      const idx = prev.findIndex((x) => x.key === key);
+      const newIdx = idx + direction;
+      if (idx === -1 || newIdx < 0 || newIdx >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+      return next;
+    });
+  };
+
   const restart = () => {
     setSessionQueue(buildSessionQueue(deck, domain, categoryFilter));
     setQueueIdx(0);
@@ -2363,6 +2374,54 @@ export default function StudyApp() {
                   <div style={{ fontSize: 12, color: "#434842" }}>
                     {total > 0 ? `${mastered}/${total} 定着・${pct}%` : "カードなし"}
                   </div>
+                  {decks.length > 1 && (
+                    <div style={{ display: "flex", gap: 4, marginTop: 2 }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveDeck(val.key, -1);
+                        }}
+                        disabled={i === 0}
+                        aria-label="順番を前へ"
+                        style={{
+                          border: "none",
+                          background: "rgba(255,255,255,0.6)",
+                          color: i === 0 ? "#C9C2B4" : "#434842",
+                          borderRadius: 8,
+                          width: 26,
+                          height: 22,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: i === 0 ? "default" : "pointer",
+                        }}
+                      >
+                        <ChevronLeft size={14} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveDeck(val.key, 1);
+                        }}
+                        disabled={i === decks.length - 1}
+                        aria-label="順番を後ろへ"
+                        style={{
+                          border: "none",
+                          background: "rgba(255,255,255,0.6)",
+                          color: i === decks.length - 1 ? "#C9C2B4" : "#434842",
+                          borderRadius: 8,
+                          width: 26,
+                          height: 22,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: i === decks.length - 1 ? "default" : "pointer",
+                        }}
+                      >
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
