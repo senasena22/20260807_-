@@ -35,8 +35,8 @@ const BRAND_TONES = [
 ];
 
 const BUILTIN_DECKS = [
-  { key: "korean", label: "韓国語", accent: "#3A5A54", accentSoft: "#E4EBE8", iconKey: "languages", schema: "korean", builtin: true },
   { key: "wine", label: "ワイン試験", accent: "#6B1F2E", accentSoft: "#F0E3E5", iconKey: "wine", schema: "wine", builtin: true },
+  { key: "korean", label: "韓国語", accent: "#3A5A54", accentSoft: "#E4EBE8", iconKey: "languages", schema: "korean", builtin: true },
 ];
 
 const DECK_STORAGE_KEY = "study-srs.deck.v1";
@@ -593,18 +593,26 @@ const TUTORIAL_STEPS = [
   {
     title: "ようこそ TAMERU へ",
     body: "小さな学びを、毎日少しずつ。登録した単語や問題を、ちょうど良いタイミングで繰り返し出題します。",
+    page: "home",
+    anchor: "center",
   },
   {
     title: "カードを登録する",
-    body: "画面右下の「＋」ボタンから、1枚ずつ手入力、またはCSVでまとめて登録できます。",
+    body: "右下の「＋」ボタンから、1枚ずつ手入力、またはCSVでまとめて登録できます。",
+    page: "review",
+    anchor: "top",
   },
   {
     title: "今日の復習をする",
     body: "ホーム画面の「今日の学習をはじめる」を押すと、その日復習すべきカードに取り組めます。",
+    page: "home",
+    anchor: "bottom",
   },
   {
     title: "テストで力試し",
-    body: "デッキ画面の「テスト」では、登録したカードからランダムに出題されます。結果は復習日には影響しないので、気軽に試せます。",
+    body: "上の「テスト」では、登録したカードからランダムに出題されます。結果は復習日には影響しないので、気軽に試せます。",
+    page: "review",
+    anchor: "bottom",
   },
 ];
 
@@ -1907,18 +1915,28 @@ export default function StudyApp() {
         </div>
       )}
 
-      {/* First-open tutorial: a short step-by-step walkthrough, shown once per device */}
+      {/* First-open tutorial: a short step-by-step walkthrough, shown once per device.
+          Each step navigates to the real screen it describes, so the explanation sits
+          alongside the actual button/page instead of staying parked on the home screen. */}
       {!showSplash && showTutorial && (
         <div
           style={{
             position: "fixed",
             inset: 0,
             zIndex: 90,
-            background: "rgba(26,28,27,0.5)",
+            background: "rgba(26,28,27,0.38)",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent:
+              TUTORIAL_STEPS[tutorialStep].anchor === "top"
+                ? "flex-start"
+                : TUTORIAL_STEPS[tutorialStep].anchor === "bottom"
+                ? "flex-end"
+                : "center",
             padding: 20,
+            paddingTop: TUTORIAL_STEPS[tutorialStep].anchor === "top" ? "calc(90px + env(safe-area-inset-top))" : 20,
+            paddingBottom: TUTORIAL_STEPS[tutorialStep].anchor === "bottom" ? "calc(96px + env(safe-area-inset-bottom))" : 20,
           }}
         >
           <div
@@ -1954,10 +1972,18 @@ export default function StudyApp() {
             <button
               onClick={() => {
                 if (tutorialStep < TUTORIAL_STEPS.length - 1) {
-                  setTutorialStep((s) => s + 1);
+                  const next = tutorialStep + 1;
+                  const nextStep = TUTORIAL_STEPS[next];
+                  if (nextStep.page === "review" && decks[0]) {
+                    openDeckReview(decks[0].key);
+                  } else {
+                    setPage("home");
+                  }
+                  setTutorialStep(next);
                 } else {
                   setShowTutorial(false);
                   localStorage.setItem(TUTORIAL_STORAGE_KEY, "1");
+                  setPage("home");
                 }
               }}
               style={{
@@ -1980,6 +2006,7 @@ export default function StudyApp() {
                 onClick={() => {
                   setShowTutorial(false);
                   localStorage.setItem(TUTORIAL_STORAGE_KEY, "1");
+                  setPage("home");
                 }}
                 style={{
                   width: "100%",
@@ -2112,7 +2139,7 @@ export default function StudyApp() {
             </div>
 
             <div style={{ fontFamily: BRAND_FONT, fontSize: 14, fontWeight: 700, color: "#33362F", marginBottom: 10 }}>
-              学習の続きから
+              あなたのデッキ
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
               {decks.map((val) => {
