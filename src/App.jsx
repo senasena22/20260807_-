@@ -318,10 +318,35 @@ function initDeck() {
   return {};
 }
 
+// shown only the very first time the app opens (no deck ever saved), so a new user has
+// something to tap into right away instead of facing two empty decks.
+function sampleDeck() {
+  const today = todayStr();
+  const mk = (domain, id, fields) => ({
+    ...fields,
+    id,
+    domain,
+    box: 0,
+    interval: 0,
+    dueAt: today,
+    seen: 0,
+    correct: 0,
+    createdAt: new Date().toISOString(),
+  });
+  return {
+    "sample-ko-1": mk("korean", "sample-ko-1", { ko: "안녕하세요", meaning: "こんにちは", romanized: "annyeonghaseyo", source: "サンプル", category: "あいさつ" }),
+    "sample-ko-2": mk("korean", "sample-ko-2", { ko: "감사합니다", meaning: "ありがとうございます", romanized: "gamsahamnida", source: "サンプル", category: "あいさつ" }),
+    "sample-ko-3": mk("korean", "sample-ko-3", { ko: "맛있어요", meaning: "おいしいです", romanized: "masisseoyo", source: "サンプル", category: "日常会話" }),
+    "sample-wine-1": mk("wine", "sample-wine-1", { q: "赤ワインの代表的なブドウ品種は？", a: "カベルネ・ソーヴィニヨン", region: "フランス｜ボルドー", topic: "品種", source: "サンプル" }),
+    "sample-wine-2": mk("wine", "sample-wine-2", { q: "シャンパーニュに使われる製法は？", a: "瓶内二次発酵（トラディショナル方式）", region: "フランス｜シャンパーニュ", topic: "醸造方法", source: "サンプル" }),
+    "sample-wine-3": mk("wine", "sample-wine-3", { q: "スクリューキャップの主な利点は？", a: "ブショネ（コルク臭）のリスクを防げる", region: "", topic: "保存・管理", source: "サンプル" }),
+  };
+}
+
 function loadDeck() {
   try {
     const raw = localStorage.getItem(DECK_STORAGE_KEY);
-    if (!raw) return initDeck();
+    if (!raw) return sampleDeck();
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return initDeck();
     const today = todayStr();
