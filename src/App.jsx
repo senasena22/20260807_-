@@ -634,6 +634,24 @@ const TUTORIAL_STEPS = [
     page: "review",
     anchor: "bottom",
   },
+  {
+    title: "目標を管理する",
+    body: "「目標」では、試験日までの残り日数や、教材(本)の進み具合を記録できます。",
+    page: "goals",
+    anchor: "bottom",
+  },
+  {
+    title: "レポートで振り返る",
+    body: "「レポート」では、週間・月間などの学習時間をグラフで振り返れます。",
+    page: "report",
+    anchor: "bottom",
+  },
+  {
+    title: "データのバックアップ",
+    body: "「設定」の「データのバックアップ」から、いつでも書き出し・読み込みができます。機種変更やアプリの入れ直しの前にぜひ。",
+    page: "settings",
+    anchor: "bottom",
+  },
 ];
 
 export default function StudyApp() {
@@ -2021,7 +2039,7 @@ export default function StudyApp() {
                   if (nextStep.page === "review" && decks[0]) {
                     openDeckReview(decks[0].key);
                   } else {
-                    setPage("home");
+                    setPage(nextStep.page);
                   }
                   setTutorialStep(next);
                 } else {
