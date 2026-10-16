@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { Volume2, Check, X, RotateCcw, Wine, Languages, Plus, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight, Settings, Paperclip, Lightbulb, PartyPopper, Share2, User, Save, Download, Upload, Cloud, Wand2, Tag, FileText, BookMarked } from "lucide-react";
+import { Volume2, Check, X, RotateCcw, Wine, Languages, Plus, Trash2, Target, Pencil, BookOpen, Brain, Star, Music, Globe, Dumbbell, Home, Library, BarChart3, ChevronLeft, ChevronRight, Settings, Paperclip, Lightbulb, PartyPopper, Share2, User, Save, Download, Upload, Cloud, Wand2, Tag, FileText, BookMarked, HelpCircle } from "lucide-react";
 
 // ---------- Content ----------
 const DECK_ICONS = {
@@ -580,6 +580,7 @@ export default function StudyApp() {
   const [showInput, setShowInput] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showList, setShowList] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [csvPreview, setCsvPreview] = useState(null);
   const csvFileInputRef = useRef(null);
   const listScrollTopRef = useRef(0);
@@ -3073,7 +3074,41 @@ export default function StudyApp() {
               >
                 テスト
               </button>
+              <button
+                onClick={() => setShowHelp((s) => !s)}
+                aria-label="使い方ヘルプ"
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: "#9A9488",
+                  cursor: "pointer",
+                  padding: 4,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <HelpCircle size={18} />
+              </button>
             </div>
+            {showHelp && (
+              <div
+                style={{
+                  background: d.accentSoft,
+                  borderRadius: 12,
+                  padding: "12px 14px",
+                  fontSize: 12.5,
+                  color: "#434842",
+                  lineHeight: 1.6,
+                }}
+              >
+                <div style={{ marginBottom: 6 }}>
+                  <strong>カードの登録:</strong> 右下の＋ボタンから「手動で入力」で1枚ずつ、または「CSVから読み込む」でまとめて登録できます。
+                </div>
+                <div>
+                  <strong>テスト:</strong> 登録済みのカードからランダムに出題する力試しモードです。結果は復習日(間隔反復)に影響しません。
+                </div>
+              </div>
+            )}
             {availableCategories.length > 0 && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <button
