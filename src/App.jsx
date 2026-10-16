@@ -51,6 +51,7 @@ const BACKUP_STORAGE_KEY = "study-srs.backupMeta.v1";
 const SYNC_CODE_STORAGE_KEY = "study-srs.syncCode.v1";
 const SYNC_API_BASE = "https://study-app.senashinjo22.workers.dev/api/sync";
 const USER_NAME_STORAGE_KEY = "study-srs.userName.v1";
+const TUTORIAL_STORAGE_KEY = "study-srs.tutorialSeen.v1";
 
 const ALL_STORAGE_KEYS = [
   DECK_STORAGE_KEY,
@@ -588,6 +589,25 @@ function ImagePickerField({ label, value, onChange }) {
 const KOREAN_SOURCE_OPTIONS = ["1行日記", "できる韓国語", "音楽", "ドラマ"];
 const WINE_SOURCE_OPTIONS = ["1冊目の教科書"];
 
+const TUTORIAL_STEPS = [
+  {
+    title: "ようこそ TAMERU へ",
+    body: "小さな学びを、毎日少しずつ。登録した単語や問題を、ちょうど良いタイミングで繰り返し出題します。",
+  },
+  {
+    title: "カードを登録する",
+    body: "画面右下の「＋」ボタンから、1枚ずつ手入力、またはCSVでまとめて登録できます。",
+  },
+  {
+    title: "今日の復習をする",
+    body: "ホーム画面の「今日の学習をはじめる」を押すと、その日復習すべきカードに取り組めます。",
+  },
+  {
+    title: "テストで力試し",
+    body: "デッキ画面の「テスト」では、登録したカードからランダムに出題されます。結果は復習日には影響しないので、気軽に試せます。",
+  },
+];
+
 export default function StudyApp() {
   const [decks, setDecks] = useState(loadDecks);
   const [deck, setDeck] = useState(loadDeck);
@@ -595,6 +615,8 @@ export default function StudyApp() {
   const [flipped, setFlipped] = useState(false);
   const [showExample, setShowExample] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem(TUTORIAL_STORAGE_KEY));
+  const [tutorialStep, setTutorialStep] = useState(0);
   const [queueIdx, setQueueIdx] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
   const [sessionQueue, setSessionQueue] = useState(() => buildSessionQueue(loadDeck(), loadDomain(loadDecks())));
@@ -1882,6 +1904,98 @@ export default function StudyApp() {
             <span>RU</span>
           </h1>
           <div style={{ fontSize: 11, lineHeight: "14px", color: "#9A9488", marginTop: 4 }}>小さな学びを、今日ためる。</div>
+        </div>
+      )}
+
+      {/* First-open tutorial: a short step-by-step walkthrough, shown once per device */}
+      {!showSplash && showTutorial && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 90,
+            background: "rgba(26,28,27,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 20,
+              padding: "28px 24px 24px",
+              maxWidth: 360,
+              width: "100%",
+              boxShadow: BRAND_SHADOW,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 18 }}>
+              {TUTORIAL_STEPS.map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: i === tutorialStep ? 18 : 6,
+                    height: 6,
+                    borderRadius: 999,
+                    background: i === tutorialStep ? BRAND_ACCENT : "#E5E2DC",
+                    transition: "width 0.2s",
+                  }}
+                />
+              ))}
+            </div>
+            <div style={{ fontFamily: BRAND_FONT, fontWeight: 700, fontSize: 17, color: "#33362F", marginBottom: 10, textAlign: "center" }}>
+              {TUTORIAL_STEPS[tutorialStep].title}
+            </div>
+            <div style={{ fontSize: 13.5, color: "#5C5A50", lineHeight: 1.7, marginBottom: 22, textAlign: "center" }}>
+              {TUTORIAL_STEPS[tutorialStep].body}
+            </div>
+            <button
+              onClick={() => {
+                if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+                  setTutorialStep((s) => s + 1);
+                } else {
+                  setShowTutorial(false);
+                  localStorage.setItem(TUTORIAL_STORAGE_KEY, "1");
+                }
+              }}
+              style={{
+                width: "100%",
+                padding: "13px 0",
+                borderRadius: 999,
+                border: "none",
+                background: BRAND_ACCENT,
+                color: "#fff",
+                fontFamily: BRAND_FONT,
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: "pointer",
+              }}
+            >
+              {tutorialStep < TUTORIAL_STEPS.length - 1 ? "わかりました" : "はじめる"}
+            </button>
+            {tutorialStep < TUTORIAL_STEPS.length - 1 && (
+              <button
+                onClick={() => {
+                  setShowTutorial(false);
+                  localStorage.setItem(TUTORIAL_STORAGE_KEY, "1");
+                }}
+                style={{
+                  width: "100%",
+                  padding: "10px 0",
+                  border: "none",
+                  background: "transparent",
+                  color: "#9A9488",
+                  fontSize: 12,
+                  marginTop: 4,
+                  cursor: "pointer",
+                }}
+              >
+                スキップ
+              </button>
+            )}
+          </div>
         </div>
       )}
 
