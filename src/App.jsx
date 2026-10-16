@@ -636,7 +636,7 @@ const TUTORIAL_STEPS = [
   },
   {
     title: "目標を管理する",
-    body: "「目標」では、試験日までの残り日数や、教材(本)の進み具合を記録できます。",
+    body: "「目標」では、試験日までの残り日数や、教材(本)の進み具合を記録できます。教材は1つのデッキにつき同時に1冊まで登録できます。",
     page: "goals",
     anchor: "bottom",
   },
@@ -649,6 +649,12 @@ const TUTORIAL_STEPS = [
   {
     title: "データのバックアップ",
     body: "「設定」の「データのバックアップ」から、いつでも書き出し・読み込みができます。機種変更やアプリの入れ直しの前にぜひ。",
+    page: "settings",
+    anchor: "bottom",
+  },
+  {
+    title: "他の端末と同期する",
+    body: "その下の「他の端末と同期」では、コードを使ってPCとスマホなど複数の端末でデータをやり取りできます。自動では同期しないので、更新したいタイミングで「保存する」「読み込む」を手動で行ってください。",
     page: "settings",
     anchor: "bottom",
   },
@@ -2825,6 +2831,9 @@ export default function StudyApp() {
                 <BookOpen size={14} /> 教材を登録する
               </button>
             )}
+            <div style={{ fontSize: 11, color: "#747872", marginTop: 8, lineHeight: 1.4 }}>
+              1つのデッキにつき、同時に登録できる教材は1冊までです。読み終わったら「完了」にすると、次の教材を登録できます。
+            </div>
           </div>
         )}
 
